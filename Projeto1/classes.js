@@ -8,14 +8,45 @@ class Polygon{
 	#angleZZ = 0.0;
 	#angleYY = 0.0;
 	#angleXX = 0.0;
+	#track;
 	
 
-	constructor(s){
+	constructor(s, track){
 		this.#sx = s;
 		this.#sy = s;
 		this.#sz = s;
+		this.#track = track;
 	}
 
+	set_tx(tx){
+		this.#tx += tx;
+	}
+
+	set_ty(ty){
+		this.#ty += ty;
+	}
+
+	set_tz(tz){
+		this.#tz += tz;
+	}
+
+
+
+	get_translation(){
+		return[this.#tx, this.#ty, this.#tz];
+	}
+
+	get_scale(){
+		return [this.#sx,this.#sy,this.#sz];
+	}
+
+	get_angle(){
+		return [this.#angleXX,this.#angleYY,this.#angleZZ]
+	}
+
+	get_track(){
+		return this.#track;
+	}
 }
 
 
@@ -222,7 +253,8 @@ class Car extends Polygon{
 	];
 
 	constructor(){
-		super(0.75, 0.75, 0.75);
+		super(0.75, 0.75, 0.75, 0);
+		super.set_ty(-0.5);
 	}
 
 	get_vertices(){
@@ -445,10 +477,59 @@ class Cube extends Polygon{
 class Piramid extends Polygon{
 	#vertices=[
 
+		-0.25, 0.0, -0.25, 
+		-0.25, 0.0, 0.25, 
+		0.0, 0.25, 0.0, 
+
+		-0.25, 0.0, 0.25, 
+		0.25, 0.0, 0.25, 
+		0.0, 0.25, 0.0, 
+
+		0.25, 0.0 0.25, 
+		0.25, 0.0 -0.25, 
+		0.0, 0.25, 0.0, 
+
+		0.25, 0.0, -0.25,
+		-0.25, 0.0 -0.25,
+		0.0, 0.25, 0.0, 
+
+		-0.25, 0.0, 0.25, 
+		0.25, 0.0, -0.25, 
+		0.25, 0.0, 0.25, 
+
+		0.25, 0.0, -0.25, 
+		-0.25, 0.0 0.25,
+		-0.25, 0.0, -0.25, 
+
 
 	];
 
 	#colors=[
+
+		0.0, 0.0, 1.0,
+		0.0, 0.0, 1.0,
+		0.0, 0.0, 1.0,
+
+		1.0, 0.0, 1.0,
+		1.0, 0.0, 1.0,
+		1.0, 0.0, 1.0,
+
+		0.0, 1.0, 0.0,
+		0.0, 1.0, 0.0,
+		0.0, 1.0, 0.0,
+
+		0.0, 1.0, 1.0,
+		0.0, 1.0, 1.0,
+		0.0, 1.0, 1.0,
+
+		0.0, 0.0, 0.0,
+		0.0, 0.0, 0.0,
+		0.0, 0.0, 0.0,
+
+		1.0, 0.0, 1.0,
+		1.0, 0.0, 1.0,
+		1.0, 0.0, 1.0,
+
 
 	];
 

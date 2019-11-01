@@ -18,6 +18,8 @@
 
 var car = new Car();
 
+var array_objects = []
+
 var count_click =0;
 
 var gl = null; // WebGL context
@@ -38,27 +40,7 @@ var globalTz = 0.0;
 
 // The translation vector
 
-var tx = 0.0;
 
-var ty = 0.0;
-
-var tz = 0.0;
-
-// The rotation angles in degrees
-
-var angleXX = 0.0;
-
-var angleYY = 0.0;
-
-var angleZZ = 0.0;
-
-// The scaling factors
-
-var sx = 0.75;
-
-var sy = 0.75;
-
-var sz = 0.75;
 
 // NEW - GLOBAL Animation controls
 
@@ -202,9 +184,10 @@ function drawModel( angleXX, angleYY, angleZZ,
 
 //----------------------------------------------------------------------------
 
+
 //  Drawing the 3D scene
 
-function drawScene() {
+function drawCar(object) {
 	
 	var pMatrix;
 	
@@ -224,11 +207,70 @@ function drawScene() {
 	
 	// Ensure that the model is "inside" the view volume
 	
-	pMatrix = perspective( 45, 1, 0.05, 15 );
+	pMatrix = perspective( 45, 1, 0.03, 15 );
 	
 	// Global transformation !!
 	
-	globalTz = -2.5;
+	globalTz = -2.4;
+
+	
+	
+	// Passing the Projection Matrix to apply the current projection
+	
+	var pUniform = gl.getUniformLocation(shaderProgram, "uPMatrix");
+	
+	gl.uniformMatrix4fv(pUniform, false, new Float32Array(flatten(pMatrix)));
+	
+	// GLOBAL TRANSFORMATION FOR THE WHOLE SCENE
+	
+	mvMatrix = translationMatrix( 0, 0, globalTz );
+	
+	// Instantianting the current model
+
+	var scale = car.get_scale();
+
+	var angle = car.get_angle();
+
+	var t = car.get_translation();
+		
+	drawModel( angle[0], angle[1], angle[2], 
+	           scale[0], scale[1], scale[2],
+	           t[0], t[1], t[2],
+	           mvMatrix,
+	           primitiveType );
+}
+
+
+//  Drawing the 3D scene
+
+function drawScene(object) {
+
+	//if object.get_tz() >= 2:
+		//return;
+	
+	var pMatrix;
+	
+	var mvMatrix = mat4();
+	
+	// Clearing the frame-buffer and the depth-buffer
+	
+	gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+	
+	// Computing the Projection Matrix
+	
+
+
+	// A standard view volume.
+	
+	// Viewer is at (0,0,0)
+	
+	// Ensure that the model is "inside" the view volume
+	
+	pMatrix = perspective( 45, 1, 0.03, 15 );
+	
+	// Global transformation !!
+	
+	globalTz = -2.4;
 
 	
 	
@@ -245,9 +287,15 @@ function drawScene() {
 	// Instantianting the current model
 
 		
-	drawModel( angleXX, angleYY, angleZZ, 
-	           sx, sy, sz,
-	           tx, ty, tz,
+	var scale = object.get_scale();
+
+	var angle = object.get_angle();
+
+	var t = object.get_translation();
+		
+	drawModel( angle[0], angle[1], angle[2], 
+	           scale[0], scale[1], scale[2],
+	           t[0], t[1], t[2],
 	           mvMatrix,
 	           primitiveType );
 }
@@ -261,18 +309,76 @@ function drawScene() {
 
 // Timer
 
-function tick() {
+//function tick() {
 	
 	
-	drawScene();
+//	drawScene();
 	
+
+//}
+
+function move_objects(){
+	var i;
+	
+	for(i = 0; i < array_objects.length;i++ ){
+		if(array_objects[i].get_tz() >= 2){
+			array_objects.splice(i,1);
+		}
+	} 
+
+	for(i = 0; i < array_objects.length;i++ ){
+		
+	}
+
 
 }
 
 
+//Creates obstacles
+function objects(){
 
-function init_car_position(){
-	ty -= 0.5;
+	var n_tracks_ocupied = Math.round((Math.random()*4));
+	var i;
+	var tracks_ocupied = [];
+
+
+
+	for(i=1;i<=n_tracks_ocupied;i++){
+		var t = create_polygon();
+		while(tracks_ocupied.includes(t)){		//so that objects do not overlap each other
+			var t = create_polygon();
+		}
+
+		array_objects.push(polygon);
+
+	}
+
+}
+
+//Create specific obstacle
+function create_polygon(){
+	var object_type = Math.round((Math.randomm()*3));
+
+	var polygon;
+
+	var scale= Math.random();
+
+	var track = Math.round(((Math.random()*4) -2));
+
+
+	switch(object_type){
+		case 0:
+			polygon = new Cube(scale,track);
+		break;
+		case 1:
+			polygon = new Piramid(scale, track);
+		break;
+		case 2:
+		break;
+
+	}
+	return track;
+
 }
 
 
@@ -301,7 +407,7 @@ function setEventListeners(){
 			switch(key){
 				case 97:
 					if (count_click > -2){
-						tx -= 0.5;
+						car.set_tx(-0.5);
 						//angleZZ-=5;
 						count_click--;	
 					} 
@@ -309,14 +415,14 @@ function setEventListeners(){
 				break;
 				case 100:
 					if (count_click < 2){
-						tx += 0.5;
+						car.set_tx(0.5);
 						//angleZZ+=5;
 						count_click++;	
 					} 
 				break;
 				
 			}
-			drawScene();
+			drawCar();
 
 		});     
 }
@@ -378,10 +484,9 @@ function runWebGL() {
 	setEventListeners();
 	
 	initBuffers();
-
-	init_car_position();
 	
-	tick();		// NEW --- A timer controls the rendering / animation    
+	//tick();
+	drawCar(car);		   
 
 	outputInfos();
 }

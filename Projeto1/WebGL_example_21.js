@@ -26,9 +26,17 @@ var gl = null; // WebGL context
 
 var shaderProgram = null;
 
-var triangleVertexPositionBuffer = null;
+
+
+//Buffer for objects created and car separated
+var objectVertexPositionBuffer = null;
 	
-var triangleVertexColorBuffer = null;
+var objectVertexColorBuffer = null;
+
+
+var carVertexPositionBuffer = null;
+	
+var carVertexColorBuffer = null;
 
 // The GLOBAL transformation parameters
 
@@ -101,30 +109,50 @@ function initBuffers() {
 
 	console.log(car.get_vertices());
 		
-	triangleVertexPositionBuffer = gl.createBuffer();
-	gl.bindBuffer(gl.ARRAY_BUFFER, triangleVertexPositionBuffer);
+	carVertexPositionBuffer = gl.createBuffer();
+	objectVertexPositionBuffer = gl.createBuffer();
+	gl.bindBuffer(gl.ARRAY_BUFFER, carVertexPositionBuffer);	
+	gl.bindBuffer(gl.ARRAY_BUFFER, objectVertexPositionBuffer);
 	gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(car.get_vertices()), gl.STATIC_DRAW);
-	triangleVertexPositionBuffer.itemSize = 3;
-	triangleVertexPositionBuffer.numItems = car.get_vertices().length / 3;			
+	//gl.bufferData(gl.ARRAY_BUFFER, 0, gl.STATIC_DRAW);
+	carVertexPositionBuffer.itemSize = 3;
+	objectVertexPositionBuffer.itemSize =3;
+	carVertexPositionBuffer.numItems = car.get_vertices().length / 3;
+	objectVertexPositionBuffer.numItems = 0;			
 
 	// Associating to the vertex shader
 	
 	gl.vertexAttribPointer(shaderProgram.vertexPositionAttribute, 
-			triangleVertexPositionBuffer.itemSize, 
+			carVertexPositionBuffer.itemSize, 
+			gl.FLOAT, false, 0, 0);
+
+
+	gl.vertexAttribPointer(shaderProgram.vertexPositionAttribute, 
+			objectVertexPositionBuffer.itemSize, 
 			gl.FLOAT, false, 0, 0);
 	
 	// Colors
 		
-	triangleVertexColorBuffer = gl.createBuffer();
-	gl.bindBuffer(gl.ARRAY_BUFFER, triangleVertexColorBuffer);
+	carVertexColorBuffer = gl.createBuffer();
+	gl.bindBuffer(gl.ARRAY_BUFFER, carVertexColorBuffer);
+	objectVertexColorBuffer = gl.createBuffer();
+	gl.bindBuffer(gl.ARRAY_BUFFER, objectVertexColorBuffer);
+	
 	gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(car.get_colors()), gl.STATIC_DRAW);
-	triangleVertexColorBuffer.itemSize = 3;
-	triangleVertexColorBuffer.numItems = car.get_colors().length / 3;			
+	//gl.bufferData(gl.ARRAY_BUFFER, 0, gl.STATIC_DRAW);
+	carVertexColorBuffer.itemSize = 3;
+	objectVertexColorBuffer.itemSize = 3;
+	carVertexColorBuffer.numItems = car.get_colors().length / 3;		
+	objectVertexColorBuffer.numItems = 0;			
 
 	// Associating to the vertex shader
 	
 	gl.vertexAttribPointer(shaderProgram.vertexColorAttribute, 
-			triangleVertexColorBuffer.itemSize, 
+			carVertexColorBuffer.itemSize, 
+			gl.FLOAT, false, 0, 0);
+
+	gl.vertexAttribPointer(shaderProgram.vertexColorAttribute, 
+			objectVertexColorBuffer.itemSize, 
 			gl.FLOAT, false, 0, 0);
 }
 
@@ -170,14 +198,65 @@ function drawModel( angleXX, angleYY, angleZZ,
 		
 		var i;
 		
-		for( i = 0; i < triangleVertexPositionBuffer.numItems / 3; i++ ) {
+		for( i = 0; i < objectVertexPositionBuffer.numItems / 3; i++ ) {
 		
 			gl.drawArrays( primitiveType, 3 * i, 3 ); 
 		}
 	}	
 	else {
 				
-		gl.drawArrays(primitiveType, 0, triangleVertexPositionBuffer.numItems); 
+		gl.drawArrays(primitiveType, 0, objectVertexPositionBuffer.numItems); 
+		
+	}	
+}
+
+//needs
+function drawModelCar( angleXX, angleYY, angleZZ, 
+					sx, sy, sz,
+					tx, ty, tz,
+					mvMatrix,
+					primitiveType ) {
+
+    // Pay attention to transformation order !!
+    
+	mvMatrix = mult( mvMatrix, translationMatrix( tx, ty, tz ) );
+						 
+	mvMatrix = mult( mvMatrix, rotationZZMatrix( angleZZ ) );
+	
+	mvMatrix = mult( mvMatrix, rotationYYMatrix( angleYY ) );
+	
+	mvMatrix = mult( mvMatrix, rotationXXMatrix( angleXX ) );
+	
+	mvMatrix = mult( mvMatrix, scalingMatrix( sx, sy, sz ) );
+						 
+	// Passing the Model View Matrix to apply the current transformation
+	
+	var mvUniform = gl.getUniformLocation(shaderProgram, "uMVMatrix");
+	
+	gl.uniformMatrix4fv(mvUniform, false, new Float32Array(flatten(mvMatrix)));
+	
+	// Drawing the contents of the vertex buffer
+	
+	// primitiveType allows drawing as filled triangles / wireframe / vertices
+	
+	if( primitiveType == gl.LINE_LOOP ) {
+		
+		// To simulate wireframe drawing!
+		
+		// No faces are defined! There are no hidden lines!
+		
+		// Taking the vertices 3 by 3 and drawing a LINE_LOOP
+		
+		var i;
+		
+		for( i = 0; i < carVertexPositionBuffer.numItems / 3; i++ ) {
+		
+			gl.drawArrays( primitiveType, 3 * i, 3 ); 
+		}
+	}	
+	else {
+				
+		gl.drawArrays(primitiveType, 0, carVertexPositionBuffer.numItems); 
 		
 	}	
 }
@@ -195,7 +274,7 @@ function drawCar(object) {
 	
 	// Clearing the frame-buffer and the depth-buffer
 	
-	gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+	//gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 	
 	// Computing the Projection Matrix
 	
@@ -233,7 +312,7 @@ function drawCar(object) {
 
 	var t = car.get_translation();
 		
-	drawModel( angle[0], angle[1], angle[2], 
+	drawModelCar( angle[0], angle[1], angle[2], 
 	           scale[0], scale[1], scale[2],
 	           t[0], t[1], t[2],
 	           mvMatrix,
@@ -243,10 +322,9 @@ function drawCar(object) {
 
 //  Drawing the 3D scene
 
-function drawScene(object) {
+function drawObjects() {
 
-	//if object.get_tz() >= 2:
-		//return;
+	
 	
 	var pMatrix;
 	
@@ -256,10 +334,7 @@ function drawScene(object) {
 	
 	gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 	
-	// Computing the Projection Matrix
 	
-
-
 	// A standard view volume.
 	
 	// Viewer is at (0,0,0)
@@ -286,50 +361,48 @@ function drawScene(object) {
 	
 	// Instantianting the current model
 
-		
-	var scale = object.get_scale();
+	for(i = 0; i < array_objects.length;i++ ){
+		var scale = array_objects[i].get_scale();
 
-	var angle = object.get_angle();
+		var angle = array_objects[i].get_angle();
 
-	var t = object.get_translation();
-		
-	drawModel( angle[0], angle[1], angle[2], 
-	           scale[0], scale[1], scale[2],
-	           t[0], t[1], t[2],
-	           mvMatrix,
-	           primitiveType );
+		var t = array_objects[i].get_translation();
+			
+		drawModel( angle[0], angle[1], angle[2], 
+		           scale[0], scale[1], scale[2],
+		           t[0], t[1], t[2],
+		           mvMatrix,
+		           primitiveType );
+			
+	}
+
+
+
+
 }
 
-//----------------------------------------------------------------------------
-//
-//  NEW --- Animation
-//
-
-// Animation --- Updating transformation parameters
-
-// Timer
-
-//function tick() {
-	
-	
-//	drawScene();
-	
-
-//}
 
 function move_objects(){
 	var i;
+
+	console.log(array_objects);
 	
 	for(i = 0; i < array_objects.length;i++ ){
 		if(array_objects[i].get_tz() >= 2){
 			array_objects.splice(i,1);
+			objectVertexPositionBuffer.numItems -= 1;
+			objectVertexColorBuffer.numItems -= 1;
 		}
 	} 
 
 	for(i = 0; i < array_objects.length;i++ ){
+		array_objects[i].set_tz(0.5); 
+
 		
 	}
 
+	drawObjects();
+		
 
 }
 
@@ -344,12 +417,14 @@ function objects(){
 
 
 	for(i=1;i<=n_tracks_ocupied;i++){
-		var t = create_polygon();
-		while(tracks_ocupied.includes(t)){		//so that objects do not overlap each other
-			var t = create_polygon();
+		var p = create_polygon();
+		while(tracks_ocupied.includes(p.get_track())){		//so that objects do not overlap each other
+			var p = create_polygon();
 		}
+		objectVertexPositionBuffer.numItems += 1;
+		objectVertexColorBuffer.numItems += 1;
 
-		array_objects.push(polygon);
+		array_objects.push(p);
 
 	}
 
@@ -357,7 +432,7 @@ function objects(){
 
 //Create specific obstacle
 function create_polygon(){
-	var object_type = Math.round((Math.randomm()*3));
+	var object_type = Math.round((Math.random()*2));
 
 	var polygon;
 
@@ -374,14 +449,50 @@ function create_polygon(){
 			polygon = new Piramid(scale, track);
 		break;
 		case 2:
+			polygon = new Cube(scale,track);
 		break;
 
 	}
-	return track;
+
+
+	var move = 0;
+	switch(polygon.get_track()){
+		case -2:
+			move = -1;
+		break;
+		case -1:
+			move = -0.5;
+		break;
+		case 0:
+		break;
+		case 1:
+			move = 0.5;
+		break;
+		case 2:
+			move = 1;
+		break;
+
+
+	}
+
+	polygon.set_tx(move);
+
+	polygon.set_tz(-50);
+	return polygon;
 
 }
 
 
+
+function handle_objects(){
+	
+	requestAnimFrame(handle_objects);
+	
+	objects();
+
+	move_objects();
+
+}
 
 //----------------------------------------------------------------------------
 //
@@ -485,10 +596,11 @@ function runWebGL() {
 	
 	initBuffers();
 	
-	//tick();
 	drawCar(car);		   
 
 	outputInfos();
+
+	//handle_objects();
 }
 
 

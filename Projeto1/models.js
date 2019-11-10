@@ -2,7 +2,9 @@
 //
 //  Functions for processing triangle mesh models
 //
-//  J. Madeira - Oct. 2015
+//	NEW VERSION - Handling just vertex coordinates
+//
+//  J. Madeira - Oct. 2015 + Nov. 2018
 //
 //////////////////////////////////////////////////////////////////////////////
 
@@ -12,9 +14,7 @@
 //
 
 function recSubdivisionMidPoint( v1, v2, v3, 
-								 c1, c2, c3,
 								 coordsArray,
-								 colorsArray,
 								 recursionDepth ) {
 
 	// Recursive midpoint subdivision of one triangle
@@ -28,12 +28,6 @@ function recSubdivisionMidPoint( v1, v2, v3,
 		coordsArray.push( v2[0], v2[1], v2[2] );
 		
 		coordsArray.push( v3[0], v3[1], v3[2] );
-		
-		colorsArray.push( c1[0], c1[1], c1[2] );
-		
-		colorsArray.push( c2[0], c2[1], c2[2] );
-		
-		colorsArray.push( c3[0], c3[1], c3[2] );	    
 	}
 	else {
 		
@@ -44,36 +38,27 @@ function recSubdivisionMidPoint( v1, v2, v3,
         var mid23 = computeMidPoint( v2, v3 );
         
         var mid31 = computeMidPoint( v3, v1 );
-        
-        // Colors are also averaged
-
-        var c12 = computeMidPoint( c1, c2 );
-
-        var c23 = computeMidPoint( c2, c3 );
-
-        var c31 = computeMidPoint( c3, c1 );
-        
+                
         // 4 recursive calls 
 
-        recSubdivisionMidPoint( v1, mid12, mid31, c1, c12, c31,
-                                coordsArray, colorsArray, recursionDepth - 1 );
+        recSubdivisionMidPoint( v1, mid12, mid31,
+                                coordsArray, recursionDepth - 1 );
 
-        recSubdivisionMidPoint( v2, mid23, mid12, c2, c23, c12,
-                                coordsArray, colorsArray, recursionDepth - 1 );
+        recSubdivisionMidPoint( v2, mid23, mid12,
+                                coordsArray, recursionDepth - 1 );
 
-        recSubdivisionMidPoint( v3, mid31, mid23, c3, c31, c23,
-                                coordsArray, colorsArray, recursionDepth - 1 );
+        recSubdivisionMidPoint( v3, mid31, mid23,
+                                coordsArray, recursionDepth - 1 );
 
-        recSubdivisionMidPoint( mid12, mid23, mid31, c12, c23, c31,
-                                coordsArray, colorsArray, recursionDepth - 1 );
+        recSubdivisionMidPoint( mid12, mid23, mid31,
+                                coordsArray, recursionDepth - 1 );
 	}
 }
 
 //----------------------------------------------------------------------------
 
 function midPointRefinement( coordsArray, 
-						     colorsArray, 
-							 recursionDepth ) {
+						     recursionDepth ) {
 	
 	// Mesh refinement - Higher-level function
 	
@@ -87,15 +72,11 @@ function midPointRefinement( coordsArray,
 
     // Copying
     
-    var origCoords = coordsArray.slice(); // slice copies the coordArray
-    
-    var origColors = colorsArray.slice();
+    var origCoords = coordsArray.slice();
     
     // Clearing the arrays
     
-    coordsArray.splice( 0, origArrayLength ); //clears the array with splice
-    
-    colorsArray.splice( 0, origArrayLength );
+    coordsArray.splice( 0, origArrayLength );
     
     var origIndex;
     
@@ -103,18 +84,14 @@ function midPointRefinement( coordsArray,
     
     // Iterate through the original triangular faces
     
-    for( origIndex = 0; origIndex < origArrayLength; origIndex += 9 ) //size 9 cause of the coordinates and colors (x,y,z) and (r,g,b) for 3 points
+    for( origIndex = 0; origIndex < origArrayLength; origIndex += 9 )
     {
         /* Call the recursive subdivision function */
         
         recSubdivisionMidPoint( origCoords.slice( origIndex, origIndex + 3 ),
 								origCoords.slice( origIndex + 3, origIndex + 6 ),
 								origCoords.slice( origIndex + 6, origIndex + 9 ),
-								origColors.slice( origIndex, origIndex + 3 ),
-								origColors.slice( origIndex + 3, origIndex + 6 ),
-								origColors.slice( origIndex + 6, origIndex + 9 ),
 								coordsArray,
-								colorsArray,
 								recursionDepth );
     }
 }
@@ -124,15 +101,11 @@ function midPointRefinement( coordsArray,
 //
 
 function recSubdivisionCentroid( v1, v2, v3, 
-								 c1, c2, c3,
 								 coordsArray,
-								 colorsArray,
 								 recursionDepth ) {
 
 	// Recursive centroid subdivision of one triangle
 	
-	// TO BE DONE !!
-
 	if( recursionDepth == 0 ) {
 		
 		// Storing coordinates and colors in the destination arrays
@@ -142,35 +115,30 @@ function recSubdivisionCentroid( v1, v2, v3,
 		coordsArray.push( v2[0], v2[1], v2[2] );
 		
 		coordsArray.push( v3[0], v3[1], v3[2] );
-		
-		colorsArray.push( c1[0], c1[1], c1[2] );
-		
-		colorsArray.push( c2[0], c2[1], c2[2] );
-		
-		colorsArray.push( c3[0], c3[1], c3[2] );	    
 	}
 	else {
 		
-		// Compute the midpoints and proceed recursively
+		// Compute the centroid and proceed recursively
 		
-       	centroidCoord = computeCentroid(v1, v2, v3);
-		centroidColors = computeCentroid(c1, c2, c3);
+        var centroid = computeCentroid( v1, v2, v3 );
 
-		recSubdivisionCentroid( v1, centroidCoord, v2, c1, centroidColors, c2,
-                                coordsArray, colorsArray, recursionDepth - 1 );
-		recSubdivisionCentroid( v2, centroidCoord, v3, c2, centroidColors, c3,
-                                coordsArray, colorsArray, recursionDepth - 1 );
-		recSubdivisionCentroid( v3, centroidCoord, v1, c3, centroidColors, c1,
-                                coordsArray, colorsArray, recursionDepth - 1 );
-	}
+        // 3 recursive calls 
 
+        recSubdivisionCentroid( v1, v2, centroid,
+                                coordsArray, recursionDepth - 1 );
+
+        recSubdivisionCentroid( v2, v3, centroid,
+                                coordsArray, recursionDepth - 1 );
+
+        recSubdivisionCentroid( v3, v1, centroid,
+                                coordsArray, recursionDepth - 1 );
+    }
 }
 
 //----------------------------------------------------------------------------
 
 function centroidRefinement( coordsArray, 
-						     colorsArray, 
-							 recursionDepth ) {
+						     recursionDepth ) {
 	
 	// Mesh refinement - Higher-level function
 	
@@ -180,40 +148,30 @@ function centroidRefinement( coordsArray,
 	
 	// recursionDepth controls the final number of triangles and vertices 
     
-    // TO BE DONE !!
-
     var origArrayLength = coordsArray.length;
 
     // Copying
     
-    var origCoords = coordsArray.slice(); // slice copies the coordArray
-    
-    var origColors = colorsArray.slice();
+    var origCoords = coordsArray.slice();
     
     // Clearing the arrays
     
-    coordsArray.splice( 0, origArrayLength ); //clears the array with splice
-    
-    colorsArray.splice( 0, origArrayLength );
+    coordsArray.splice( 0, origArrayLength );
     
     var origIndex;
     
-    // Each triangle is recursively subdivided into 4 triangles
+    // Each triangle is recursively subdivided into 3 triangles
     
     // Iterate through the original triangular faces
     
-    for( origIndex = 0; origIndex < origArrayLength; origIndex += 9 ) //size 9 cause of the coordinates and colors (x,y,z) and (r,g,b) for 3 points
+    for( origIndex = 0; origIndex < origArrayLength; origIndex += 9 )
     {
         /* Call the recursive subdivision function */
         
         recSubdivisionCentroid( origCoords.slice( origIndex, origIndex + 3 ),
 								origCoords.slice( origIndex + 3, origIndex + 6 ),
 								origCoords.slice( origIndex + 6, origIndex + 9 ),
-								origColors.slice( origIndex, origIndex + 3 ),
-								origColors.slice( origIndex + 3, origIndex + 6 ),
-								origColors.slice( origIndex + 6, origIndex + 9 ),
 								coordsArray,
-								colorsArray,
 								recursionDepth );
     }
 }
@@ -225,24 +183,58 @@ function centroidRefinement( coordsArray,
 
 function moveToSphericalSurface( coordsArray ) {
 	
-	// Each vertex is moved to the spherical surface of radius 1
+	// Each vertex is moved to the spherecial surface of radius 1
     // and centered at (0,0,0)
     
     // This is done by handling each vertex as if it were a prosition vector,
     // and normalizing
 	
-	// TO BE DONE !!
-
-	var arrayLength = coordsArray.length;
-		
-	for( origIndex = 0; origIndex < arrayLength; origIndex += 3 )
+    var arrayLength = coordsArray.length;
+    
+    for( origIndex = 0; origIndex < arrayLength; origIndex += 3 )
     {
-    	var v = coordsArray.slice(origIndex, origIndex + 3);
-
-    	v = normalize(v);
-
-    	for(var i=0; i<3; i++)
-    		coordsArray[origIndex+i] = v[i];
+        var v =  coordsArray.slice( origIndex, origIndex + 3 );
+        
+        normalize( v );
+        
+        var i;
+        
+        for( i = 0; i < 3; i++ ) {
+            
+            coordsArray[origIndex + i] = v[i];
+        }
     }
-	
 }
+
+//----------------------------------------------------------------------------
+//
+//  NEW --- Computing the triangle unit normal vector
+//
+//  And associating to every vertex
+//
+
+function computeVertexNormals( coordsArray, normalsArray ) {
+	
+	// Clearing the new normals array
+	
+	normalsArray.splice( 0, normalsArray.length );
+	
+    // Taking 3 vertices from the coordinates array 
+
+    for( var index = 0; index < coordsArray.length; index += 9 )
+    {
+		// Compute unit normal vector for each triangle
+			
+        var normalVector = computeNormalVector( coordsArray.slice(index, index + 3),
+												coordsArray.slice(index + 3, index + 6),
+												coordsArray.slice(index + 6, index + 9) );
+
+        // Store the unit normal vector for each vertex 
+
+        for( var j = 0; j < 3; j++ )
+        {
+            normalsArray.push( normalVector[0], normalVector[1], normalVector[2] ); 
+		}
+	}
+}
+

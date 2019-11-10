@@ -3,8 +3,8 @@
 //  Mathematical functions 
 //
 //  Ref. Original code from the Angel / Shreiner examples
-//	
-//	Additional functions by J. Madeira - Sep./Oct. 2015
+//  
+//  Additional functions by J. Madeira - Sep./Oct. 2015
 //
 //////////////////////////////////////////////////////////////////////////////
 
@@ -403,73 +403,73 @@ var sizeof = {
 
 function rotationXXMatrix( degrees )
 {
-	m = mat4();
-	
-	m[1][1] = Math.cos( radians( degrees ) );
-	
-	m[1][2] = -Math.sin( radians( degrees ) );
-	
-	m[2][1] = Math.sin( radians( degrees ) );
-	
-	m[2][2]	= Math.cos( radians( degrees ) )
-	
-	return m;	
+    m = mat4();
+    
+    m[1][1] = Math.cos( radians( degrees ) );
+    
+    m[1][2] = -Math.sin( radians( degrees ) );
+    
+    m[2][1] = Math.sin( radians( degrees ) );
+    
+    m[2][2] = Math.cos( radians( degrees ) )
+    
+    return m;   
 }
 
 function rotationYYMatrix( degrees )
 {
-	m = mat4();
-	
-	m[0][0] = Math.cos( radians( degrees ) );
-	
-	m[0][2] = Math.sin( radians( degrees ) );
-	
-	m[2][0] = -Math.sin( radians( degrees ) );
-	
-	m[2][2]	= Math.cos( radians( degrees ) )
-	
-	return m;	
+    m = mat4();
+    
+    m[0][0] = Math.cos( radians( degrees ) );
+    
+    m[0][2] = Math.sin( radians( degrees ) );
+    
+    m[2][0] = -Math.sin( radians( degrees ) );
+    
+    m[2][2] = Math.cos( radians( degrees ) )
+    
+    return m;   
 }
 
 function rotationZZMatrix( degrees )
 {
-	m = mat4();
-	
-	m[0][0] = Math.cos( radians( degrees ) );
-	
-	m[0][1] = -Math.sin( radians( degrees ) );
-	
-	m[1][0] = Math.sin( radians( degrees ) );
-	
-	m[1][1]	= Math.cos( radians( degrees ) )
-	
-	return m;	
+    m = mat4();
+    
+    m[0][0] = Math.cos( radians( degrees ) );
+    
+    m[0][1] = -Math.sin( radians( degrees ) );
+    
+    m[1][0] = Math.sin( radians( degrees ) );
+    
+    m[1][1] = Math.cos( radians( degrees ) )
+    
+    return m;   
 }
 
 function scalingMatrix( sx, sy, sz )
 {
-	m = mat4();
-	
-	m[0][0] = sx;
-	
-	m[1][1] = sy;
-	
-	m[2][2] = sz;	
-	
-	return m;	
+    m = mat4();
+    
+    m[0][0] = sx;
+    
+    m[1][1] = sy;
+    
+    m[2][2] = sz;   
+    
+    return m;   
 }
 
 function translationMatrix( tx, ty, tz )
 {
-	m = mat4();
-	
-	m[0][3] = tx;
-	
-	m[1][3] = ty;
-	
-	m[2][3] = tz;	
-	
-	return m;	
+    m = mat4();
+    
+    m[0][3] = tx;
+    
+    m[1][3] = ty;
+    
+    m[2][3] = tz;   
+    
+    return m;   
 }
 
 //----------------------------------------------------------------------------
@@ -520,24 +520,19 @@ function perspective( fovy, aspect, near, far )
 
 //----------------------------------------------------------------------------
 //
-//  Operations for 3D Points and Vectors
+//  Operations for 3D Points and Vectors - J. Madeira
 //
 
 function computeMidPoint( p1, p2 )
 {
     var result = vec3();
     
-    // TO DO !!
+    for( i = 0; i < 3; i++ ) {
         
-
-    var middle_x = (p1[0] + p2[0])/2;
-    var middle_y = (p1[1] + p2[1])/2;
-    var middle_z = (p1[2] + p2[2])/2;
-    
-    result[0] = middle_x;
-    result[1] = middle_y;
-    result[2] = middle_z;
-    
+        result[i] = ( p1[i] + p2[i] ) / 2.0;
+        
+    }
+        
     return result;
 }
 
@@ -545,16 +540,12 @@ function computeCentroid( p1, p2, p3 )
 {
     var result = vec3();
     
-    // TO DO !!
-    var middle_x = (p1[0] + p2[0] + p3[0])/3;
-    var middle_y = (p1[1] + p2[1] + p3[1])/3;
-    var middle_z = (p1[2] + p2[2] + p3[2])/3;
-
-    result[0] = middle_x;
-    result[1] = middle_y;
-    result[2] = middle_z;
-       
-    
+    for( i = 0; i < 3; i++ ) {
+        
+        result[i] = ( p1[i] + p2[i] + p3[i]) / 3.0;
+        
+    }
+        
     return result;
 }
 
@@ -562,18 +553,127 @@ function computeCentroid( p1, p2, p3 )
 
 function normalize( v )
 {
-    // TO DO !!
-
-    var vector = vec3();
-
-    var norma = Math.sqrt(Math.pow(v[0],2) + Math.pow(v[1],2) + Math.pow(v[2],2));
-
-
-    vector[0]= v[0] / norma;
+    var squaresSum = v[0] * v[0] + v[1] * v[1] + v[2] * v[2];
     
-    vector[1]= v[1] / norma;
+    var norm = Math.sqrt( squaresSum );
     
-    vector[2]= v[2] / norma;
+    v[0] /= norm;
+    
+    v[1] /= norm;
+    
+    v[2] /= norm;
+}
 
-    return vector;
+//----------------------------------------------------------------------------
+
+// NEW --- Symmetric vector
+
+function symmetric( v )
+{
+    var result = vec3();
+    
+    for( i = 0; i < 3; i++ ) {
+        
+        result[i] = - v[i];
+    }
+        
+    return result;
+}
+
+//----------------------------------------------------------------------------
+
+// NEW --- Dot product
+
+function dotProduct( v1, v2 )
+{
+    var result = 0.0;
+    
+    for( i = 0; i < 3; i++ ) {
+        
+        result += v1[i] * v2[i];
+    }
+        
+    return result;
+}
+
+//----------------------------------------------------------------------------
+
+// NEW --- Vector product
+
+function vectorProduct( v1, v2 )
+{
+    var res = vec3();
+
+    res[0] = v1[1] * v2[2] - v1[2] * v2[1];
+
+    res[1] = - ( v1[0] * v2[2] - v1[2] * v2[0] );
+
+    res[2] = v1[0] * v2[1] - v1[1] * v2[0];
+
+    return res;
+}
+
+//----------------------------------------------------------------------------
+
+// NEW --- Compute unit normal vector to triangle defined by p1, p2 and p3 (CCW)
+
+function computeNormalVector( p0, p1, p2 )
+{
+    var v1 = vec3();
+
+    var v2 = vec3();
+
+    var result = vec3();
+
+    v1[0] = p1[0] - p0[0];
+
+    v1[1] = p1[1] - p0[1];
+
+    v1[2] = p1[2] - p0[2];
+
+    v2[0] = p2[0] - p0[0];
+
+    v2[1] = p2[1] - p0[1];
+
+    v2[2] = p2[2] - p0[2];
+
+    result = vectorProduct( v1, v2 );
+
+    normalize( result );
+
+    return result;
+}
+
+//----------------------------------------------------------------------------
+
+// NEW --- Multiplying using homogeneous coordinates
+
+function multiplyPointByMatrix( m, p )
+{
+    var result = vec4();
+    
+    for( var i = 0; i < 4; i++ ) {
+        
+        for( var j = 0; j < 4; j++ ) {
+        
+                result[i] += m[i][j] * p[j];
+        }
+    }
+    
+    return result;
+}
+
+function multiplyVectorByMatrix( m, p )
+{
+    var result = vec4();
+    
+    for( var i = 0; i < 4; i++ ) {
+        
+        for( var j = 0; j < 4; j++ ) {  // Can stop earlier; 4th coord is ZERO !!
+        
+                result[i] += m[i][j] * p[j];
+        }
+    }
+    
+    return result;
 }

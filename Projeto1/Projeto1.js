@@ -1,8 +1,8 @@
 //////////////////////////////////////////////////////////////////////////////
 //
-//  WebGL_example_20.js 
+//  Projeto.js 
 //
-//  Animating models with global and local transformations.
+//  
 //
 //  References: www.learningwebgl.com + E. Angel examples
 //
@@ -11,12 +11,27 @@
 //////////////////////////////////////////////////////////////////////////////
 
 
+
+
+////
+// vertices array
+// color computed from light source
+// normal vectors
+//
+
+
+
+
+
+
 //----------------------------------------------------------------------------
 //
 // Global Variables
 //
 
 var car = new Car();
+
+
 
 var array_objects = []
 
@@ -31,12 +46,11 @@ var shaderProgram = null;
 //Buffer for objects created and car separated
 var objectVertexPositionBuffer = null;
 	
-var objectVertexColorBuffer = null;
+var objectVertexNormalBuffer = null;
 
+var carVertexNormalBuffer = null;
 
 var carVertexPositionBuffer = null;
-	
-var carVertexColorBuffer = null;
 
 // The GLOBAL transformation parameters
 
@@ -99,27 +113,33 @@ var projectionType = 0;
 //  Rendering
 //
 
+
+
+function init_car(){
+
+	var carNormals = [];
+
+	computeVertexNormals(car.get_vertices(), carNormals);
+
+	car.set_normals(carNormals);
+
+}
+
+
+
 // Handling the Vertex and the Color Buffers
 
-function initBuffers() {	
+function initBuffersCar() {	
 	
 	// Coordinates
-
-	
-
-	console.log(car.get_vertices());
 		
 	carVertexPositionBuffer = gl.createBuffer();
-	objectVertexPositionBuffer = gl.createBuffer();
 	gl.bindBuffer(gl.ARRAY_BUFFER, carVertexPositionBuffer);	
-	gl.bindBuffer(gl.ARRAY_BUFFER, objectVertexPositionBuffer);
 	gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(car.get_vertices()), gl.STATIC_DRAW);
 	//gl.bufferData(gl.ARRAY_BUFFER, 0, gl.STATIC_DRAW);
 	carVertexPositionBuffer.itemSize = 3;
-	objectVertexPositionBuffer.itemSize =3;
 	carVertexPositionBuffer.numItems = car.get_vertices().length / 3;
-	objectVertexPositionBuffer.numItems = 0;			
-
+	
 	// Associating to the vertex shader
 	
 	gl.vertexAttribPointer(shaderProgram.vertexPositionAttribute, 
@@ -127,62 +147,109 @@ function initBuffers() {
 			gl.FLOAT, false, 0, 0);
 
 
-	gl.vertexAttribPointer(shaderProgram.vertexPositionAttribute, 
-			objectVertexPositionBuffer.itemSize, 
-			gl.FLOAT, false, 0, 0);
-	
-	// Colors
+	// Vertex Normal Vectors
 		
-	carVertexColorBuffer = gl.createBuffer();
-	gl.bindBuffer(gl.ARRAY_BUFFER, carVertexColorBuffer);
-	objectVertexColorBuffer = gl.createBuffer();
-	gl.bindBuffer(gl.ARRAY_BUFFER, objectVertexColorBuffer);
-	
-	gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(car.get_colors()), gl.STATIC_DRAW);
-	//gl.bufferData(gl.ARRAY_BUFFER, 0, gl.STATIC_DRAW);
-	carVertexColorBuffer.itemSize = 3;
-	objectVertexColorBuffer.itemSize = 3;
-	carVertexColorBuffer.numItems = car.get_colors().length / 3;		
-	objectVertexColorBuffer.numItems = 0;			
+	carVertexNormalBuffer = gl.createBuffer();
+	gl.bindBuffer(gl.ARRAY_BUFFER, carVertexNormalBuffer);
+	gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(car.get_normals()), gl.STATIC_DRAW);
+	carVertexNormalBuffer.itemSize = 3;
+	carVertexNormalBuffer.numItems = car.get_normals().length / 3;			
 
 	// Associating to the vertex shader
 	
-	gl.vertexAttribPointer(shaderProgram.vertexColorAttribute, 
-			carVertexColorBuffer.itemSize, 
+	gl.vertexAttribPointer(shaderProgram.vertexNormalAttribute, 
+			carVertexNormalBuffer.itemSize, 
+			gl.FLOAT, false, 0, 0);	
+
+
+}
+
+
+function initBuffersObjects(polygon) {	
+
+		
+	objectVertexPositionBuffer = gl.createBuffer();
+	gl.bindBuffer(gl.ARRAY_BUFFER, objectVertexPositionBuffer);	
+	gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(polygon.get_vertices()), gl.STATIC_DRAW);
+	//gl.bufferData(gl.ARRAY_BUFFER, 0, gl.STATIC_DRAW);
+	objectVertexPositionBuffer.itemSize = 3;
+	objectVertexPositionBuffer.numItems = polygon.get_vertices().length / 3;
+	
+	// Associating to the vertex shader
+	
+	gl.vertexAttribPointer(shaderProgram.vertexPositionAttribute, 
+			objectVertexPositionBuffer.itemSize, 
 			gl.FLOAT, false, 0, 0);
 
-	gl.vertexAttribPointer(shaderProgram.vertexColorAttribute, 
-			objectVertexColorBuffer.itemSize, 
-			gl.FLOAT, false, 0, 0);
+
+	// Vertex Normal Vectors
+		
+	objectVertexNormalBuffer = gl.createBuffer();
+	gl.bindBuffer(gl.ARRAY_BUFFER, objectVertexNormalBuffer);
+	gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(polygon.get_normals()), gl.STATIC_DRAW);
+	objectVertexNormalBuffer.itemSize = 3;
+	objectVertexNormalBuffer.numItems = polygon.get_normals().length / 3;			
+
+	// Associating to the vertex shader
+	
+	gl.vertexAttribPointer(shaderProgram.vertexNormalAttribute, 
+			objectVertexNormalBuffer.itemSize, 
+			gl.FLOAT, false, 0, 0);	
+
+
+	
 }
 
 //----------------------------------------------------------------------------
 
 //  Drawing the model
 
-function drawModel( angleXX, angleYY, angleZZ, 
-					sx, sy, sz,
-					tx, ty, tz,
+function drawModel( polygon,
 					mvMatrix,
 					primitiveType ) {
 
+	t = polygon.get_translation()
+
+	s = polygon.get_scale();
+
+	angle = polygon.get_angle();
+
     // Pay attention to transformation order !!
     
-	mvMatrix = mult( mvMatrix, translationMatrix( tx, ty, tz ) );
+	mvMatrix = mult( mvMatrix, translationMatrix( t[0], t[1], t[2] ) );
 						 
-	mvMatrix = mult( mvMatrix, rotationZZMatrix( angleZZ ) );
+	mvMatrix = mult( mvMatrix, rotationZZMatrix( angle[2] ) );
 	
-	mvMatrix = mult( mvMatrix, rotationYYMatrix( angleYY ) );
+	mvMatrix = mult( mvMatrix, rotationYYMatrix( angle[1] ) );
 	
-	mvMatrix = mult( mvMatrix, rotationXXMatrix( angleXX ) );
+	mvMatrix = mult( mvMatrix, rotationXXMatrix( angle[0] ) );
 	
-	mvMatrix = mult( mvMatrix, scalingMatrix( sx, sy, sz ) );
+	mvMatrix = mult( mvMatrix, scalingMatrix( s[0], s[1], s[2] ) );
 						 
 	// Passing the Model View Matrix to apply the current transformation
 	
 	var mvUniform = gl.getUniformLocation(shaderProgram, "uMVMatrix");
 	
 	gl.uniformMatrix4fv(mvUniform, false, new Float32Array(flatten(mvMatrix)));
+
+	initBuffersObjects();
+
+	// Material properties
+	
+	gl.uniform3fv( gl.getUniformLocation(shaderProgram, "k_ambient"), 
+		flatten(polygon.get_kAmbi()) );
+    
+    gl.uniform3fv( gl.getUniformLocation(shaderProgram, "k_diffuse"),
+        flatten(polygon.get_kDiff()) );
+    
+    gl.uniform3fv( gl.getUniformLocation(shaderProgram, "k_specular"),
+        flatten(polygon.get_kSpec()) );
+
+	gl.uniform1f( gl.getUniformLocation(shaderProgram, "shininess"), 
+		polygon.get_nPhong() );
+
+
+
 	
 	// Drawing the contents of the vertex buffer
 	
@@ -208,33 +275,77 @@ function drawModel( angleXX, angleYY, angleZZ,
 		gl.drawArrays(primitiveType, 0, objectVertexPositionBuffer.numItems); 
 		
 	}	
+
+
 }
 
 //needs
-function drawModelCar( angleXX, angleYY, angleZZ, 
-					sx, sy, sz,
-					tx, ty, tz,
+function drawModelCar(car,
 					mvMatrix,
 					primitiveType ) {
 
     // Pay attention to transformation order !!
-    
-	mvMatrix = mult( mvMatrix, translationMatrix( tx, ty, tz ) );
+	
+    var scale = car.get_scale();
+
+	var angle = car.get_angle();
+
+	var t = car.get_translation();
+	
+
+
+	mvMatrix = mult( mvMatrix, translationMatrix( t[0], t[1], t[2] ) );
 						 
-	mvMatrix = mult( mvMatrix, rotationZZMatrix( angleZZ ) );
+	mvMatrix = mult( mvMatrix, rotationZZMatrix( angle[2] ) );
 	
-	mvMatrix = mult( mvMatrix, rotationYYMatrix( angleYY ) );
+	mvMatrix = mult( mvMatrix, rotationYYMatrix( angle[1] ) );
 	
-	mvMatrix = mult( mvMatrix, rotationXXMatrix( angleXX ) );
+	mvMatrix = mult( mvMatrix, rotationXXMatrix( angle[0] ) );
 	
-	mvMatrix = mult( mvMatrix, scalingMatrix( sx, sy, sz ) );
+	mvMatrix = mult( mvMatrix, scalingMatrix( scale[0], scale[1], scale[2] ) );
 						 
 	// Passing the Model View Matrix to apply the current transformation
-	
+	console.log("ainda esta aqui");
 	var mvUniform = gl.getUniformLocation(shaderProgram, "uMVMatrix");
 	
 	gl.uniformMatrix4fv(mvUniform, false, new Float32Array(flatten(mvMatrix)));
+
+	initBuffersCar(car);
+
+	gl.uniform3fv( gl.getUniformLocation(shaderProgram, "k_ambient"), 
+		flatten(car.get_kAmbi()) );
+    
+    gl.uniform3fv( gl.getUniformLocation(shaderProgram, "k_diffuse"),
+        flatten(car.get_kDiff()) );
+    
+    gl.uniform3fv( gl.getUniformLocation(shaderProgram, "k_specular"),
+        flatten(car.get_kSpec()) );
+
+	gl.uniform1f( gl.getUniformLocation(shaderProgram, "shininess"), 
+		car.get_nPhong() );
+
+	console.log("ainda esta aqui2");
+
+	 // Light Sources
 	
+	var numLights = lightSources.length;
+	
+	gl.uniform1i( gl.getUniformLocation(shaderProgram, "numLights"), 
+		numLights );
+
+	//Light Sources
+	
+	for(var i = 0; i < lightSources.length; i++ )
+	{
+		gl.uniform1i( gl.getUniformLocation(shaderProgram, "allLights[" + String(i) + "].isOn"),
+			lightSources[i].isOn );
+    
+		gl.uniform4fv( gl.getUniformLocation(shaderProgram, "allLights[" + String(i) + "].position"),
+			flatten(lightSources[i].getPosition()) );
+    
+		gl.uniform3fv( gl.getUniformLocation(shaderProgram, "allLights[" + String(i) + "].intensities"),
+			flatten(lightSources[i].getIntensity()) );
+    }
 	// Drawing the contents of the vertex buffer
 	
 	// primitiveType allows drawing as filled triangles / wireframe / vertices
@@ -259,6 +370,7 @@ function drawModelCar( angleXX, angleYY, angleZZ,
 		gl.drawArrays(primitiveType, 0, carVertexPositionBuffer.numItems); 
 		
 	}	
+
 }
 
 //----------------------------------------------------------------------------
@@ -274,11 +386,7 @@ function drawCar(object) {
 	
 	// Clearing the frame-buffer and the depth-buffer
 	
-	//gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
-	
-	// Computing the Projection Matrix
-	
-
+	gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
 	// A standard view volume.
 	
@@ -291,8 +399,6 @@ function drawCar(object) {
 	// Global transformation !!
 	
 	globalTz = -2.4;
-
-	
 	
 	// Passing the Projection Matrix to apply the current projection
 	
@@ -306,15 +412,7 @@ function drawCar(object) {
 	
 	// Instantianting the current model
 
-	var scale = car.get_scale();
-
-	var angle = car.get_angle();
-
-	var t = car.get_translation();
-		
-	drawModelCar( angle[0], angle[1], angle[2], 
-	           scale[0], scale[1], scale[2],
-	           t[0], t[1], t[2],
+	drawModelCar( car,
 	           mvMatrix,
 	           primitiveType );
 }
@@ -362,15 +460,8 @@ function drawObjects() {
 	// Instantianting the current model
 
 	for(i = 0; i < array_objects.length;i++ ){
-		var scale = array_objects[i].get_scale();
-
-		var angle = array_objects[i].get_angle();
-
-		var t = array_objects[i].get_translation();
 			
-		drawModel( angle[0], angle[1], angle[2], 
-		           scale[0], scale[1], scale[2],
-		           t[0], t[1], t[2],
+		drawModel( array_objects[i],
 		           mvMatrix,
 		           primitiveType );
 			
@@ -385,13 +476,12 @@ function drawObjects() {
 function move_objects(){
 	var i;
 
-	console.log(array_objects);
+	
 	
 	for(i = 0; i < array_objects.length;i++ ){
 		if(array_objects[i].get_tz() >= 2){
 			array_objects.splice(i,1);
-			objectVertexPositionBuffer.numItems -= 1;
-			objectVertexColorBuffer.numItems -= 1;
+			
 		}
 	} 
 
@@ -421,8 +511,7 @@ function objects(){
 		while(tracks_ocupied.includes(p.get_track())){		//so that objects do not overlap each other
 			var p = create_polygon();
 		}
-		objectVertexPositionBuffer.numItems += 1;
-		objectVertexColorBuffer.numItems += 1;
+		
 
 		array_objects.push(p);
 
@@ -509,12 +598,8 @@ function setEventListeners(){
 	
     document.addEventListener("keypress", function(event){
 				
-			var bgColor = document.getElementById("bg-color");
-
-			// Getting the pressed key and setting the bg color
-		
 			var key = event.keyCode; // ASCII
-			console.log(key);
+			
 			switch(key){
 				case 97:
 					if (count_click > -2){
@@ -591,10 +676,10 @@ function runWebGL() {
 	initWebGL( canvas );
 
 	shaderProgram = initShaders( gl );
+
+	init_car();
 	
 	setEventListeners();
-	
-	initBuffers();
 	
 	drawCar(car);		   
 

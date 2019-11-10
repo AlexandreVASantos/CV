@@ -311,7 +311,7 @@ class Cube extends Polygon{
 	}
 
 	get_vertices(){
-		return this.vertices;
+		return this.#vertices;
 	}
 
 	
@@ -354,8 +354,34 @@ class Piramid extends Polygon{
 	}
 
 	get_vertices(){
-		return this.vertices;
+		return this.#vertices;
 	}
 
 	
+}
+
+
+class Sphere extends Cube{
+	#normals;
+	#vertices;
+	constructor(s,track){
+		super(s,track);
+		this.#vertices = super.get_vertices();
+		this.#normals = this.#vertices;
+		midPointRefinement( this.#vertices, 3 );
+		moveToSphericalSurface( this.#vertices );
+		this.#normals = computeVertexNormals(this.#vertices);	
+	}
+
+
+	
+	get_normals(){
+		return this.#normals;
+	}
+
+	get_vertices(){
+		return this.#vertices;
+	}
+
+
 }

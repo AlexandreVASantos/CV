@@ -213,21 +213,25 @@ function moveToSphericalSurface( coordsArray ) {
 //  And associating to every vertex
 //
 
-function computeVertexNormals( coordsArray, normalsArray ) {
+function computeVertexNormals( coordsArray) {
 	
 	// Clearing the new normals array
 	
-	normalsArray.splice( 0, normalsArray.length );
+	
+
+	normalsArray=[];
+
+	var vertices= coordsArray;
 	
     // Taking 3 vertices from the coordinates array 
 
-    for( var index = 0; index < coordsArray.length; index += 9 )
+    for( var index = 0; index < vertices.length; index += 9 )
     {
 		// Compute unit normal vector for each triangle
 			
-        var normalVector = computeNormalVector( coordsArray.slice(index, index + 3),
-												coordsArray.slice(index + 3, index + 6),
-												coordsArray.slice(index + 6, index + 9) );
+        var normalVector = computeNormalVector( vertices.slice(index, index + 3),
+												vertices.slice(index + 3, index + 6),
+												vertices.slice(index + 6, index + 9) );
 
         // Store the unit normal vector for each vertex 
 
@@ -236,5 +240,7 @@ function computeVertexNormals( coordsArray, normalsArray ) {
             normalsArray.push( normalVector[0], normalVector[1], normalVector[2] ); 
 		}
 	}
+
+	return normalsArray;
 }
 

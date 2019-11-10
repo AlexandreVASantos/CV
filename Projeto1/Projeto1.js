@@ -117,11 +117,7 @@ var projectionType = 0;
 
 function init_car(){
 
-	var carNormals = [];
-
-	computeVertexNormals(car.get_vertices(), carNormals);
-
-	car.set_normals(carNormals);
+	car.set_normals(computeVertexNormals(car.get_vertices()));
 
 }
 
@@ -171,9 +167,9 @@ function initBuffersObjects(polygon) {
 	objectVertexPositionBuffer = gl.createBuffer();
 	gl.bindBuffer(gl.ARRAY_BUFFER, objectVertexPositionBuffer);	
 	gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(polygon.get_vertices()), gl.STATIC_DRAW);
-	//gl.bufferData(gl.ARRAY_BUFFER, 0, gl.STATIC_DRAW);
 	objectVertexPositionBuffer.itemSize = 3;
 	objectVertexPositionBuffer.numItems = polygon.get_vertices().length / 3;
+
 	
 	// Associating to the vertex shader
 	
@@ -232,7 +228,7 @@ function drawModel( polygon,
 	
 	gl.uniformMatrix4fv(mvUniform, false, new Float32Array(flatten(mvMatrix)));
 
-	initBuffersObjects();
+	initBuffersObjects(polygon);
 
 	// Material properties
 	
@@ -249,32 +245,29 @@ function drawModel( polygon,
 		polygon.get_nPhong() );
 
 
+	var numLights = lightSources.length;
+	
+	gl.uniform1i( gl.getUniformLocation(shaderProgram, "numLights"), 
+		numLights );
 
+	//Light Sources
 	
-	// Drawing the contents of the vertex buffer
+	for(var i = 0; i < lightSources.length; i++ )
+	{
+		gl.uniform1i( gl.getUniformLocation(shaderProgram, "allLights[" + String(i) + "].isOn"),
+			lightSources[i].isOn );
+    
+		gl.uniform4fv( gl.getUniformLocation(shaderProgram, "allLights[" + String(i) + "].position"),
+			flatten(lightSources[i].getPosition()) );
+    
+		gl.uniform3fv( gl.getUniformLocation(shaderProgram, "allLights[" + String(i) + "].intensities"),
+			flatten(lightSources[i].getIntensity()) );
+    }
 	
-	// primitiveType allows drawing as filled triangles / wireframe / vertices
-	
-	if( primitiveType == gl.LINE_LOOP ) {
+
+	gl.drawArrays(primitiveType, 0, objectVertexPositionBuffer.numItems); 
 		
-		// To simulate wireframe drawing!
 		
-		// No faces are defined! There are no hidden lines!
-		
-		// Taking the vertices 3 by 3 and drawing a LINE_LOOP
-		
-		var i;
-		
-		for( i = 0; i < objectVertexPositionBuffer.numItems / 3; i++ ) {
-		
-			gl.drawArrays( primitiveType, 3 * i, 3 ); 
-		}
-	}	
-	else {
-				
-		gl.drawArrays(primitiveType, 0, objectVertexPositionBuffer.numItems); 
-		
-	}	
 
 
 }
@@ -346,30 +339,12 @@ function drawModelCar(car,
 		gl.uniform3fv( gl.getUniformLocation(shaderProgram, "allLights[" + String(i) + "].intensities"),
 			flatten(lightSources[i].getIntensity()) );
     }
-	// Drawing the contents of the vertex buffer
 	
-	// primitiveType allows drawing as filled triangles / wireframe / vertices
 	
-	if( primitiveType == gl.LINE_LOOP ) {
-		
-		// To simulate wireframe drawing!
-		
-		// No faces are defined! There are no hidden lines!
-		
-		// Taking the vertices 3 by 3 and drawing a LINE_LOOP
-		
-		var i;
-		
-		for( i = 0; i < carVertexPositionBuffer.numItems / 3; i++ ) {
-		
-			gl.drawArrays( primitiveType, 3 * i, 3 ); 
-		}
-	}	
-	else {
 				
-		gl.drawArrays(primitiveType, 0, carVertexPositionBuffer.numItems); 
-		
-	}	
+	gl.drawArrays(primitiveType, 0, carVertexPositionBuffer.numItems); 
+	
+	
 
 }
 
@@ -460,7 +435,7 @@ function drawObjects() {
 	// Instantianting the current model
 
 	for(i = 0; i < array_objects.length;i++ ){
-			
+		
 		drawModel( array_objects[i],
 		           mvMatrix,
 		           primitiveType );
@@ -479,7 +454,7 @@ function move_objects(){
 	
 	
 	for(i = 0; i < array_objects.length;i++ ){
-		if(array_objects[i].get_tz() >= 2){
+		if(array_objects[i].get_tz() >= 1){
 			array_objects.splice(i,1);
 			
 		}
@@ -521,24 +496,33 @@ function objects(){
 
 //Create specific obstacle
 function create_polygon(){
-	var object_type = Math.round((Math.random()*2));
+	var object_type = Math.round((Math.random()*3));
 
 	var polygon;
 
-	var scale= Math.random();
+	var scale= Math.random()*0.1;
 
-	var track = Math.round(((Math.random()*4) -2));
+	var track = Math.round(((Math.random()*4)-2));
 
+	var pNormals=[];
 
 	switch(object_type){
 		case 0:
 			polygon = new Cube(scale,track);
+			polygon.set_normals(computeVertexNormals(polygon.get_vertices()));
+	
 		break;
 		case 1:
 			polygon = new Piramid(scale, track);
+			polygon.set_normals(computeVertexNormals(polygon.get_vertices()));
 		break;
 		case 2:
 			polygon = new Cube(scale,track);
+			polygon.set_normals(computeVertexNormals(polygon.get_vertices()));
+		break;
+		case 3:
+			polygon = new Sphere(scale,track);
+			
 		break;
 
 	}
@@ -685,7 +669,7 @@ function runWebGL() {
 
 	outputInfos();
 
-	//handle_objects();
+	handle_objects();
 }
 
 

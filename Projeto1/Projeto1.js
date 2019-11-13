@@ -31,9 +31,11 @@
 
 var car = new Car();
 
+console.log
 
 
-var array_objects = []
+
+var array_objects = [car];
 
 var count_click =0;
 
@@ -47,10 +49,6 @@ var shaderProgram = null;
 var objectVertexPositionBuffer = null;
 	
 var objectVertexNormalBuffer = null;
-
-var carVertexNormalBuffer = null;
-
-var carVertexPositionBuffer = null;
 
 // The GLOBAL transformation parameters
 
@@ -123,42 +121,6 @@ function init_car(){
 
 
 
-// Handling the Vertex and the Color Buffers
-
-function initBuffersCar() {	
-	
-	// Coordinates
-		
-	carVertexPositionBuffer = gl.createBuffer();
-	gl.bindBuffer(gl.ARRAY_BUFFER, carVertexPositionBuffer);	
-	gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(car.get_vertices()), gl.STATIC_DRAW);
-	//gl.bufferData(gl.ARRAY_BUFFER, 0, gl.STATIC_DRAW);
-	carVertexPositionBuffer.itemSize = 3;
-	carVertexPositionBuffer.numItems = car.get_vertices().length / 3;
-	
-	// Associating to the vertex shader
-	
-	gl.vertexAttribPointer(shaderProgram.vertexPositionAttribute, 
-			carVertexPositionBuffer.itemSize, 
-			gl.FLOAT, false, 0, 0);
-
-
-	// Vertex Normal Vectors
-		
-	carVertexNormalBuffer = gl.createBuffer();
-	gl.bindBuffer(gl.ARRAY_BUFFER, carVertexNormalBuffer);
-	gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(car.get_normals()), gl.STATIC_DRAW);
-	carVertexNormalBuffer.itemSize = 3;
-	carVertexNormalBuffer.numItems = car.get_normals().length / 3;			
-
-	// Associating to the vertex shader
-	
-	gl.vertexAttribPointer(shaderProgram.vertexNormalAttribute, 
-			carVertexNormalBuffer.itemSize, 
-			gl.FLOAT, false, 0, 0);	
-
-
-}
 
 
 function initBuffersObjects(polygon) {	
@@ -272,126 +234,6 @@ function drawModel( polygon,
 
 }
 
-//needs
-function drawModelCar(car,
-					mvMatrix,
-					primitiveType ) {
-
-    // Pay attention to transformation order !!
-	
-    var scale = car.get_scale();
-
-	var angle = car.get_angle();
-
-	var t = car.get_translation();
-	
-
-
-	mvMatrix = mult( mvMatrix, translationMatrix( t[0], t[1], t[2] ) );
-						 
-	mvMatrix = mult( mvMatrix, rotationZZMatrix( angle[2] ) );
-	
-	mvMatrix = mult( mvMatrix, rotationYYMatrix( angle[1] ) );
-	
-	mvMatrix = mult( mvMatrix, rotationXXMatrix( angle[0] ) );
-	
-	mvMatrix = mult( mvMatrix, scalingMatrix( scale[0], scale[1], scale[2] ) );
-						 
-	// Passing the Model View Matrix to apply the current transformation
-	console.log("ainda esta aqui");
-	var mvUniform = gl.getUniformLocation(shaderProgram, "uMVMatrix");
-	
-	gl.uniformMatrix4fv(mvUniform, false, new Float32Array(flatten(mvMatrix)));
-
-	initBuffersCar(car);
-
-	gl.uniform3fv( gl.getUniformLocation(shaderProgram, "k_ambient"), 
-		flatten(car.get_kAmbi()) );
-    
-    gl.uniform3fv( gl.getUniformLocation(shaderProgram, "k_diffuse"),
-        flatten(car.get_kDiff()) );
-    
-    gl.uniform3fv( gl.getUniformLocation(shaderProgram, "k_specular"),
-        flatten(car.get_kSpec()) );
-
-	gl.uniform1f( gl.getUniformLocation(shaderProgram, "shininess"), 
-		car.get_nPhong() );
-
-	console.log("ainda esta aqui2");
-
-	 // Light Sources
-	
-	var numLights = lightSources.length;
-	
-	gl.uniform1i( gl.getUniformLocation(shaderProgram, "numLights"), 
-		numLights );
-
-	//Light Sources
-	
-	for(var i = 0; i < lightSources.length; i++ )
-	{
-		gl.uniform1i( gl.getUniformLocation(shaderProgram, "allLights[" + String(i) + "].isOn"),
-			lightSources[i].isOn );
-    
-		gl.uniform4fv( gl.getUniformLocation(shaderProgram, "allLights[" + String(i) + "].position"),
-			flatten(lightSources[i].getPosition()) );
-    
-		gl.uniform3fv( gl.getUniformLocation(shaderProgram, "allLights[" + String(i) + "].intensities"),
-			flatten(lightSources[i].getIntensity()) );
-    }
-	
-	
-				
-	gl.drawArrays(primitiveType, 0, carVertexPositionBuffer.numItems); 
-	
-	
-
-}
-
-//----------------------------------------------------------------------------
-
-
-//  Drawing the 3D scene
-
-function drawCar(object) {
-	
-	var pMatrix;
-	
-	var mvMatrix = mat4();
-	
-	// Clearing the frame-buffer and the depth-buffer
-	
-	gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
-
-	// A standard view volume.
-	
-	// Viewer is at (0,0,0)
-	
-	// Ensure that the model is "inside" the view volume
-	
-	pMatrix = perspective( 45, 1, 0.03, 15 );
-	
-	// Global transformation !!
-	
-	globalTz = -2.4;
-	
-	// Passing the Projection Matrix to apply the current projection
-	
-	var pUniform = gl.getUniformLocation(shaderProgram, "uPMatrix");
-	
-	gl.uniformMatrix4fv(pUniform, false, new Float32Array(flatten(pMatrix)));
-	
-	// GLOBAL TRANSFORMATION FOR THE WHOLE SCENE
-	
-	mvMatrix = translationMatrix( 0, 0, globalTz );
-	
-	// Instantianting the current model
-
-	drawModelCar( car,
-	           mvMatrix,
-	           primitiveType );
-}
-
 
 //  Drawing the 3D scene
 
@@ -402,6 +244,8 @@ function drawObjects() {
 	var pMatrix;
 	
 	var mvMatrix = mat4();
+
+	console.log(mvMatrix);
 	
 	// Clearing the frame-buffer and the depth-buffer
 	
@@ -448,19 +292,64 @@ function drawObjects() {
 }
 
 
+var lastTime = 0;
+
+function animate() {
+	
+	var timeNow = new Date().getTime();
+	
+	if( lastTime != 0 ) {
+		
+		var elapsed = timeNow - lastTime;
+		
+		// Global rotation
+		
+		
+
+		// For every model --- Local rotations
+		
+		for(var i = 1; i < array_objects.length; i++ )
+	    {
+			if( array_objects[i].get_rotXXOn() ) {
+
+				array_objects[i].set_rotAngleXX(array_objects[i].get_rotXXDir() * array_objects[i].get_rotXXSpeed() * (90 * elapsed) / 1000.0);
+			}
+		}
+		
+		// Rotating the light sources
+	
+		for(var i = 0; i < lightSources.length; i++ )
+	    {
+			if( lightSources[i].isRotYYOn() ) {
+
+				var angle = lightSources[i].getRotAngleYY() + lightSources[i].getRotationSpeed() * (90 * elapsed) / 1000.0;
+		
+				lightSources[i].setRotAngleYY( angle );
+			}
+		}
+}
+	
+	lastTime = timeNow;
+}
+
+
+
 function move_objects(){
 	var i;
 
 	
 	
-	for(i = 0; i < array_objects.length;i++ ){
-		if(array_objects[i].get_tz() >= 1){
+	for(i = 1; i < array_objects.length;i++ ){
+		if(array_objects[i].get_tz() >= 3){
+			console.log(array_objects[i].get_tx());
+			console.log(array_objects[0].get_tx());	
 			array_objects.splice(i,1);
 			
 		}
 	} 
 
-	for(i = 0; i < array_objects.length;i++ ){
+	for(i = 1; i < array_objects.length;i++ ){
+
 		array_objects[i].set_tz(0.5); 
 
 		
@@ -487,6 +376,7 @@ function objects(){
 			var p = create_polygon();
 		}
 		
+		tracks_ocupied.push(p.get_track());
 
 		array_objects.push(p);
 
@@ -500,32 +390,32 @@ function create_polygon(){
 
 	var polygon;
 
-	var scale= Math.random()*0.1;
-
 	var track = Math.round(((Math.random()*4)-2));
 
 	var pNormals=[];
 
 	switch(object_type){
 		case 0:
-			polygon = new Cube(scale,track);
+			polygon = new Cube(track);
 			polygon.set_normals(computeVertexNormals(polygon.get_vertices()));
 	
 		break;
 		case 1:
-			polygon = new Piramid(scale, track);
+			polygon = new Piramid(track);
 			polygon.set_normals(computeVertexNormals(polygon.get_vertices()));
+
 		break;
 		case 2:
-			polygon = new Cube(scale,track);
+			polygon = new Cube(track);
 			polygon.set_normals(computeVertexNormals(polygon.get_vertices()));
 		break;
 		case 3:
-			polygon = new Sphere(scale,track);
+			polygon = new Sphere(track);
 			
 		break;
 
 	}
+
 
 
 	var move = 0;
@@ -549,24 +439,24 @@ function create_polygon(){
 	}
 
 	polygon.set_tx(move);
-
-	polygon.set_tz(-50);
+	
+	polygon.set_tz(-25);
 	return polygon;
 
 }
 
 
 
-function handle_objects(){
+//*function handle_objects(){
 	
-	requestAnimFrame(handle_objects);
+//	requestAnimFrame(handle_objects);
 	
-	objects();
+//	objects();
 
-	move_objects();
+//	move_objects();
 
-}
-
+	
+//}
 //----------------------------------------------------------------------------
 //
 //  User Interaction
@@ -602,7 +492,7 @@ function setEventListeners(){
 				break;
 				
 			}
-			drawCar();
+			drawModel(array_objects[0]);
 
 		});     
 }
@@ -665,11 +555,16 @@ function runWebGL() {
 	
 	setEventListeners();
 	
-	drawCar(car);		   
+	   
 
 	outputInfos();
 
-	handle_objects();
+	//handle_objects();
+
+	setInterval(objects,3000);
+
+	setInterval(move_objects, 100);
+	setInterval(animate, 1);
 }
 
 

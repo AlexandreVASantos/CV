@@ -31,11 +31,9 @@
 
 var car = new Car();
 
-console.log
-
-
-
 var array_objects = [car];
+
+console.log(array_objects);
 
 var count_click =0;
 
@@ -50,55 +48,6 @@ var objectVertexPositionBuffer = null;
 	
 var objectVertexNormalBuffer = null;
 
-// The GLOBAL transformation parameters
-
-var globalAngleYY = 0.0;
-
-var globalTz = 0.0;
-
-// The local transformation parameters
-
-// The translation vector
-
-
-
-// NEW - GLOBAL Animation controls
-
-var globalRotationYY_ON = 1;
-
-var globalRotationYY_DIR = 1;
-
-var globalRotationYY_SPEED = 1;
-
-// NEW - Local Animation controls
-
-var rotationXX_ON = 0;
-
-var rotationXX_DIR = 0;
-
-var rotationXX_SPEED = 0;
- 
-var rotationYY_ON = 0;
-
-var rotationYY_DIR = 1;
-
-var rotationYY_SPEED = 1;
- 
-var rotationZZ_ON = 0;
-
-var rotationZZ_DIR = 1;
-
-var rotationZZ_SPEED = 1;
- 
-// To allow choosing the way of drawing the model triangles
-
-var primitiveType = null;
- 
-// To allow choosing the projection type
-
-var projectionType = 0;
- 
-// For storing the vertices defining the triangles
 
 
 //----------------------------------------------------------------------------
@@ -116,7 +65,7 @@ var projectionType = 0;
 function init_car(){
 
 	car.set_normals(computeVertexNormals(car.get_vertices()));
-
+	drawObjects();
 }
 
 
@@ -245,8 +194,7 @@ function drawObjects() {
 	
 	var mvMatrix = mat4();
 
-	console.log(mvMatrix);
-	
+		
 	// Clearing the frame-buffer and the depth-buffer
 	
 	gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
@@ -283,6 +231,8 @@ function drawObjects() {
 		drawModel( array_objects[i],
 		           mvMatrix,
 		           primitiveType );
+
+
 			
 	}
 
@@ -492,7 +442,7 @@ function setEventListeners(){
 				break;
 				
 			}
-			drawModel(array_objects[0]);
+			drawObjects();
 
 		});     
 }

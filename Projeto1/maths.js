@@ -280,6 +280,10 @@ function mult( u, v )
 {
     var result = [];
 
+    console.log(u);
+
+    console.log(v);
+
     if ( u.matrix && v.matrix ) {
         if ( u.length != v.length ) {
             throw "mult(): trying to add matrices of different dimensions";

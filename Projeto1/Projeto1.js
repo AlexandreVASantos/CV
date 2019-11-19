@@ -12,28 +12,26 @@
 
 
 
-
-////
-// vertices array
-// color computed from light source
-// normal vectors
-//
-
-
-
-
-
-
 //----------------------------------------------------------------------------
 //
 // Global Variables
 //
 
+
+var game_over = false;
+var overall_level;
+
+var setInt1;
+
+var setInt2;
+
+var setInt3;
+
+game_started = false;
+
 var car = new Car();
 
 var array_objects = [car];
-
-console.log(array_objects);
 
 var count_click =0;
 
@@ -47,6 +45,10 @@ var shaderProgram = null;
 var objectVertexPositionBuffer = null;
 	
 var objectVertexNormalBuffer = null;
+
+var objectVertexTextureCoordBuffer;
+
+
 
 
 
@@ -65,6 +67,7 @@ var objectVertexNormalBuffer = null;
 function init_car(){
 
 	car.set_normals(computeVertexNormals(car.get_vertices()));
+	car.prepare_polygon(false);
 	drawObjects();
 }
 
@@ -104,9 +107,47 @@ function initBuffersObjects(polygon) {
 			gl.FLOAT, false, 0, 0);	
 
 
+	// Textures
+
+	if(polygon.textures()){
+	    objectVertexTextureCoordBuffer = gl.createBuffer();
+	    gl.bindBuffer(gl.ARRAY_BUFFER, objectVertexTextureCoordBuffer);
+	 	gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(polygon.get_texture_coord()), gl.STATIC_DRAW);
+	    objectVertexTextureCoordBuffer.itemSize = 3;
+	    objectVertexTextureCoordBuffer.numItems = 36;		
+	}
+
 	
 }
 
+
+function handleLoadedTexture(texture) {
+	gl.bindTexture(gl.TEXTURE_2D, texture);
+	gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
+	gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, texture.image);
+	gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+	gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+	gl.bindTexture(gl.TEXTURE_2D, null);
+}
+
+
+var webGLTexture=[];
+
+var index =0;
+
+function initTexture(filename) {
+	
+	webGLTexture.push(gl.createTexture());
+	
+	index = webGLTexture.length -1;
+	
+	webGLTexture[index].image = new Image();
+	webGLTexture[index].image.onload = function () {
+		handleLoadedTexture(webGLTexture[index]);
+	}
+	
+	webGLTexture[index].image.src = filename;
+}
 //----------------------------------------------------------------------------
 
 //  Drawing the model
@@ -141,40 +182,49 @@ function drawModel( polygon,
 
 	initBuffersObjects(polygon);
 
-	// Material properties
-	
-	gl.uniform3fv( gl.getUniformLocation(shaderProgram, "k_ambient"), 
-		flatten(polygon.get_kAmbi()) );
-    
-    gl.uniform3fv( gl.getUniformLocation(shaderProgram, "k_diffuse"),
-        flatten(polygon.get_kDiff()) );
-    
-    gl.uniform3fv( gl.getUniformLocation(shaderProgram, "k_specular"),
-        flatten(polygon.get_kSpec()) );
 
-	gl.uniform1f( gl.getUniformLocation(shaderProgram, "shininess"), 
-		polygon.get_nPhong() );
+	if(polygon.textures() == false){
 
 
-	var numLights = lightSources.length;
-	
-	gl.uniform1i( gl.getUniformLocation(shaderProgram, "numLights"), 
-		numLights );
+		// Material properties
+		
+		gl.uniform3fv( gl.getUniformLocation(shaderProgram, "k_ambient"), 
+			flatten(polygon.get_kAmbi()) );
+	    
+	    gl.uniform3fv( gl.getUniformLocation(shaderProgram, "k_diffuse"),
+	        flatten(polygon.get_kDiff()) );
+	    
+	    gl.uniform3fv( gl.getUniformLocation(shaderProgram, "k_specular"),
+	        flatten(polygon.get_kSpec()) );
 
-	//Light Sources
-	
-	for(var i = 0; i < lightSources.length; i++ )
-	{
-		gl.uniform1i( gl.getUniformLocation(shaderProgram, "allLights[" + String(i) + "].isOn"),
-			lightSources[i].isOn );
-    
-		gl.uniform4fv( gl.getUniformLocation(shaderProgram, "allLights[" + String(i) + "].position"),
-			flatten(lightSources[i].getPosition()) );
-    
-		gl.uniform3fv( gl.getUniformLocation(shaderProgram, "allLights[" + String(i) + "].intensities"),
-			flatten(lightSources[i].getIntensity()) );
+		gl.uniform1f( gl.getUniformLocation(shaderProgram, "shininess"), 
+			polygon.get_nPhong() );
+
+
+		var numLights = lightSources.length;
+		
+		gl.uniform1i( gl.getUniformLocation(shaderProgram, "numLights"), 
+			numLights );
+
+		//Light Sources
+		
+		for(var i = 0; i < lightSources.length; i++ )
+		{
+			gl.uniform1i( gl.getUniformLocation(shaderProgram, "allLights[" + String(i) + "].isOn"),
+				lightSources[i].isOn );
+	    
+			gl.uniform4fv( gl.getUniformLocation(shaderProgram, "allLights[" + String(i) + "].position"),
+				flatten(lightSources[i].getPosition()) );
+	    
+			gl.uniform3fv( gl.getUniformLocation(shaderProgram, "allLights[" + String(i) + "].intensities"),
+				flatten(lightSources[i].getIntensity()) );
+	    }
+    }else{
+
+		gl.bindBuffer(gl.ARRAY_BUFFER, objectVertexTextureCoordBuffer);
+    	gl.vertexAttribPointer(shaderProgram.textureCoordAttribute, objectVertexTextureCoordBuffer.itemSize, gl.FLOAT, false, 0, 0);
+
     }
-	
 
 	gl.drawArrays(primitiveType, 0, objectVertexPositionBuffer.numItems); 
 		
@@ -227,6 +277,16 @@ function drawObjects() {
 	// Instantianting the current model
 
 	for(i = 0; i < array_objects.length;i++ ){
+		if(array_objects[i].textures()==true){
+
+			gl.activeTexture(gl.TEXTURE0);
+   
+		    
+		    gl.bindTexture(gl.TEXTURE_2D, webGLTexture[0]);
+		    
+		 
+		    gl.uniform1i(shaderProgram.samplerUniform, 0);
+		}
 		
 		drawModel( array_objects[i],
 		           mvMatrix,
@@ -245,6 +305,10 @@ function drawObjects() {
 var lastTime = 0;
 
 function animate() {
+	if(game_over){
+		clearInterval(Int3);
+		return;
+	}
 	
 	var timeNow = new Date().getTime();
 	
@@ -287,20 +351,24 @@ function animate() {
 function move_objects(){
 	var i;
 
-	
+	if(game_over){
+		clearInterval(Int2);
+		return;
+	}
 	
 	for(i = 1; i < array_objects.length;i++ ){
-		if(array_objects[i].get_tz() >= 3){
-			console.log(array_objects[i].get_tx());
-			console.log(array_objects[0].get_tx());	
+		if(array_objects[i].get_tz() >= -1){
+
 			array_objects.splice(i,1);
+
+			document.getElementById("counterObj").innerHTML = parseInt(document.getElementById("counterObj").innerHTML, 10) + 1;
 			
 		}
 	} 
 
 	for(i = 1; i < array_objects.length;i++ ){
 
-		array_objects[i].set_tz(0.5); 
+		array_objects[i].set_tz(0.5);
 
 		
 	}
@@ -311,10 +379,30 @@ function move_objects(){
 }
 
 
+function time(){
+
+	
+
+
+
+}
+
 //Creates obstacles
 function objects(){
+	if(game_over){
+		clearInterval(Int1);
+		document.getElementById("info").innerHTML = "GAME OVER";
+		return;
+	}
 
-	var n_tracks_ocupied = Math.round((Math.random()*4));
+	var n_tracks_ocupied
+	if(overall_level == 1){
+		n_tracks_ocupied = Math.round((Math.random()*3)+1);
+	}else if(overall_level == 2){
+		n_tracks_ocupied = Math.round((Math.random()*2)+2);
+	}else{
+		n_tracks_ocupied = Math.round((Math.random()*1)+3);
+	}
 	var i;
 	var tracks_ocupied = [];
 
@@ -338,6 +426,8 @@ function objects(){
 function create_polygon(){
 	var object_type = Math.round((Math.random()*3));
 
+
+	texture = Math.round(Math.random()); 
 	var polygon;
 
 	var track = Math.round(((Math.random()*4)-2));
@@ -365,8 +455,11 @@ function create_polygon(){
 		break;
 
 	}
-
-
+	if(texture == 1){
+		polygon.prepare_polygon(true);	
+	}else{
+		polygon.prepare_polygon(false);
+	}
 
 	var move = 0;
 	switch(polygon.get_track()){
@@ -397,28 +490,60 @@ function create_polygon(){
 
 
 
-//*function handle_objects(){
-	
-//	requestAnimFrame(handle_objects);
-	
-//	objects();
+var interval_start;
 
-//	move_objects();
+function start(){
+    if(!game_started){
+    	return;
+    }else{
 
-	
-//}
-//----------------------------------------------------------------------------
-//
-//  User Interaction
-//
+    document.getElementById("info").innerHTML = "The game has started";
+    setTimeout(function(){
+    	document.getElementById("info").innerHTML = "";	
+    },2000)
+	Int1 = setInterval(objects,1300);
 
-function outputInfos(){
-    
+	if (overall_level == 1){
+
+		Int2 = setInterval(move_objects, 100);
+
+	}else if(overall_level == 2){
+
+		Int2 = setInterval(move_objects, 80);
+
+	}else{
+
+		Int2 = setInterval(move_objects, 60);
+
+
+	} 
+	Int3 = setInterval(animate, 1);
+
+	CountTime = setInterval(time, 1000);
+
+    }
+
+    clearInterval(interval_start);
 }
 
 //----------------------------------------------------------------------------
 
+
+
 function setEventListeners(){
+
+	button_start = document.getElementById("start");
+
+	button_start.addEventListener("click", function(event){
+		if(!game_started){
+			overall_level = document.getElementById("level").value;
+			game_started = true;
+		}
+
+	}
+
+	);
+
 	
     document.addEventListener("keypress", function(event){
 				
@@ -504,17 +629,14 @@ function runWebGL() {
 	init_car();
 	
 	setEventListeners();
+
+	initTexture("brick.png");
+
+	initTexture("velvet.png");
 	
-	   
 
-	outputInfos();
-
-	//handle_objects();
-
-	setInterval(objects,3000);
-
-	setInterval(move_objects, 100);
-	setInterval(animate, 1);
+	interval_start = setInterval(start, 100);
+	
 }
 
 

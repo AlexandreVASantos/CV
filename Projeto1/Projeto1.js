@@ -358,7 +358,9 @@ function move_objects(){
 	
 	for(i = 1; i < array_objects.length;i++ ){
 		if(array_objects[i].get_tz() >= -1){
-
+			if( car.get_tx() == array_objects[i].get_tx()){
+				game_over = true;
+			}
 			array_objects.splice(i,1);
 
 			document.getElementById("counterObj").innerHTML = parseInt(document.getElementById("counterObj").innerHTML, 10) + 1;
@@ -367,10 +369,7 @@ function move_objects(){
 	} 
 
 	for(i = 1; i < array_objects.length;i++ ){
-
 		array_objects[i].set_tz(0.5);
-
-		
 	}
 
 	drawObjects();

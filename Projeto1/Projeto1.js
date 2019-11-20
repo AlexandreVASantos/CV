@@ -260,7 +260,7 @@ function drawObjects() {
 	
 	// Global transformation !!
 	
-	globalTz = -2.4;
+	globalTz = -1.5;
 
 	
 	
@@ -351,16 +351,19 @@ function animate() {
 function move_objects(){
 	var i;
 
+			
+
 	if(game_over){
 		clearInterval(Int2);
 		return;
 	}
 	
 	for(i = 1; i < array_objects.length;i++ ){
-		if(array_objects[i].get_tz() >= -1){
-			if( car.get_tx() == array_objects[i].get_tx()){
+		if( car.get_tz() >= array_objects[i].get_tz() +1 && car.get_tz() <= array_objects[i].get_tz() + 1.5 && car.get_track() == array_objects[i].get_track()){
+			
 				game_over = true;
-			}
+		}
+		if(array_objects[i].get_tz() >= car.get_tz()){
 			array_objects.splice(i,1);
 
 			document.getElementById("counterObj").innerHTML = parseInt(document.getElementById("counterObj").innerHTML, 10) + 1;
@@ -455,7 +458,8 @@ function create_polygon(){
 
 	}
 	if(texture == 1){
-		polygon.prepare_polygon(true);	
+		//polygon.prepare_polygon(true);	
+		polygon.prepare_polygon(false);
 	}else{
 		polygon.prepare_polygon(false);
 	}
@@ -547,26 +551,29 @@ function setEventListeners(){
     document.addEventListener("keypress", function(event){
 				
 			var key = event.keyCode; // ASCII
-			
-			switch(key){
-				case 97:
-					if (count_click > -2){
-						car.set_tx(-0.5);
-						//angleZZ-=5;
-						count_click--;	
-					} 
+			if (game_started && !game_over){
+				switch(key){
+					case 97:
+						if (count_click > -2){
+							car.set_tx(-0.5);
+							car.set_track(-1);
+							//angleZZ-=5;
+							count_click--;	
+						} 
 
-				break;
-				case 100:
-					if (count_click < 2){
-						car.set_tx(0.5);
-						//angleZZ+=5;
-						count_click++;	
-					} 
-				break;
-				
+					break;
+					case 100:
+						if (count_click < 2){
+							car.set_tx(0.5);
+							//angleZZ+=5;
+							car.set_track(1);
+							count_click++;	
+						} 
+					break;
+					
+				}
+				drawObjects();
 			}
-			drawObjects();
 
 		});     
 }

@@ -164,6 +164,10 @@ class Polygon{
 		return this.#track;
 	}
 
+	set_track(number){
+		this.#track += number;
+	}
+
 	get_normals(){
 		return this.#normals;
 	}

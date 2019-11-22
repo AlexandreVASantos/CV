@@ -6,7 +6,7 @@
 	
 <!--
 
-WebGL_example_21.html
+Web_example_21.html
 
 Mesh Models - Refinement
 
@@ -34,6 +34,7 @@ Passing the Model-View Matrix and the Projection Matrix.
 
 <script id="shader-vs" type="x-shader/x-vertex">
 	
+    
     attribute vec3 vPosition;
 
     uniform mat4 uMVMatrix;
@@ -189,6 +190,7 @@ Passing the Model-View Matrix and the Projection Matrix.
            fColor += diffuse + specular;
 	   }
 	}
+
     
 </script>
 
@@ -204,7 +206,6 @@ Passing the Model-View Matrix and the Projection Matrix.
 		
 		gl_FragColor = fColor;
 	}
-
 </script>
 
 

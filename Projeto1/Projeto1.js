@@ -29,9 +29,18 @@ var setInt3;
 
 game_started = false;
 
+scenario = new Scenario();
+scenario.set_normals(computeVertexNormals(scenario.get_vertices()));
+
+road = new Road()
+road.set_normals(computeVertexNormals(road.get_vertices()));
+
+
+
 var car = new Car();
 
-var array_objects = [car];
+
+var array_objects = [scenario,road,car];
 
 var count_click =0;
 
@@ -46,7 +55,7 @@ var objectVertexPositionBuffer = null;
 	
 var objectVertexNormalBuffer = null;
 
-var objectVertexTextureCoordBuffer;
+var cubeVertexIndexBuffer;
 
 
 
@@ -67,7 +76,7 @@ var objectVertexTextureCoordBuffer;
 function init_car(){
 
 	car.set_normals(computeVertexNormals(car.get_vertices()));
-	car.prepare_polygon(false);
+
 	drawObjects();
 }
 
@@ -77,7 +86,6 @@ function init_car(){
 
 function initBuffersObjects(polygon) {	
 
-		
 	objectVertexPositionBuffer = gl.createBuffer();
 	gl.bindBuffer(gl.ARRAY_BUFFER, objectVertexPositionBuffer);	
 	gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(polygon.get_vertices()), gl.STATIC_DRAW);
@@ -106,51 +114,23 @@ function initBuffersObjects(polygon) {
 			objectVertexNormalBuffer.itemSize, 
 			gl.FLOAT, false, 0, 0);	
 
+	if(polygon instanceof Cube){
+		
 
-	// Textures
-
-	if(polygon.textures()){
-	    objectVertexTextureCoordBuffer = gl.createBuffer();
-	    gl.bindBuffer(gl.ARRAY_BUFFER, objectVertexTextureCoordBuffer);
-	 	gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(polygon.get_texture_coord()), gl.STATIC_DRAW);
-	    objectVertexTextureCoordBuffer.itemSize = 3;
-	    objectVertexTextureCoordBuffer.numItems = 36;		
+		cubeVertexIndexBuffer = gl.createBuffer();
+	    gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, cubeVertexIndexBuffer);
+	    gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(polygon.get_index_vertex()), gl.STATIC_DRAW);
+	    cubeVertexIndexBuffer.itemSize = 1;
+	    cubeVertexIndexBuffer.numItems = 36;
 	}
-
-	
 }
 
 
-function handleLoadedTexture(texture) {
-	gl.bindTexture(gl.TEXTURE_2D, texture);
-	gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
-	gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, texture.image);
-	gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
-	gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
-	gl.bindTexture(gl.TEXTURE_2D, null);
-}
 
-
-var webGLTexture=[];
-
-var index =0;
-
-function initTexture(filename) {
-	
-	webGLTexture.push(gl.createTexture());
-	
-	index = webGLTexture.length -1;
-	
-	webGLTexture[index].image = new Image();
-	webGLTexture[index].image.onload = function () {
-		handleLoadedTexture(webGLTexture[index]);
-	}
-	
-	webGLTexture[index].image.src = filename;
-}
 //----------------------------------------------------------------------------
 
 //  Drawing the model
+
 
 function drawModel( polygon,
 					mvMatrix,
@@ -182,51 +162,51 @@ function drawModel( polygon,
 
 	initBuffersObjects(polygon);
 
+	// Material properties
+	
+	gl.uniform3fv( gl.getUniformLocation(shaderProgram, "k_ambient"), 
+		flatten(polygon.get_kAmbi()) );
+    
+    gl.uniform3fv( gl.getUniformLocation(shaderProgram, "k_diffuse"),
+        flatten(polygon.get_kDiff()) );
+    
+    gl.uniform3fv( gl.getUniformLocation(shaderProgram, "k_specular"),
+        flatten(polygon.get_kSpec()) );
 
-	if(polygon.textures() == false){
-
-
-		// Material properties
-		
-		gl.uniform3fv( gl.getUniformLocation(shaderProgram, "k_ambient"), 
-			flatten(polygon.get_kAmbi()) );
-	    
-	    gl.uniform3fv( gl.getUniformLocation(shaderProgram, "k_diffuse"),
-	        flatten(polygon.get_kDiff()) );
-	    
-	    gl.uniform3fv( gl.getUniformLocation(shaderProgram, "k_specular"),
-	        flatten(polygon.get_kSpec()) );
-
-		gl.uniform1f( gl.getUniformLocation(shaderProgram, "shininess"), 
-			polygon.get_nPhong() );
+	gl.uniform1f( gl.getUniformLocation(shaderProgram, "shininess"), 
+		polygon.get_nPhong() );
 
 
-		var numLights = lightSources.length;
-		
-		gl.uniform1i( gl.getUniformLocation(shaderProgram, "numLights"), 
-			numLights );
+	var numLights = lightSources.length;
+	
+	gl.uniform1i( gl.getUniformLocation(shaderProgram, "numLights"), 
+		numLights );
 
-		//Light Sources
-		
-		for(var i = 0; i < lightSources.length; i++ )
-		{
-			gl.uniform1i( gl.getUniformLocation(shaderProgram, "allLights[" + String(i) + "].isOn"),
-				lightSources[i].isOn );
-	    
-			gl.uniform4fv( gl.getUniformLocation(shaderProgram, "allLights[" + String(i) + "].position"),
-				flatten(lightSources[i].getPosition()) );
-	    
-			gl.uniform3fv( gl.getUniformLocation(shaderProgram, "allLights[" + String(i) + "].intensities"),
-				flatten(lightSources[i].getIntensity()) );
-	    }
-    }else{
-
-		gl.bindBuffer(gl.ARRAY_BUFFER, objectVertexTextureCoordBuffer);
-    	gl.vertexAttribPointer(shaderProgram.textureCoordAttribute, objectVertexTextureCoordBuffer.itemSize, gl.FLOAT, false, 0, 0);
-
+	//Light Sources
+	
+	for(var i = 0; i < lightSources.length; i++ )
+	{
+		gl.uniform1i( gl.getUniformLocation(shaderProgram, "allLights[" + String(i) + "].isOn"),
+			lightSources[i].isOn );
+    
+		gl.uniform4fv( gl.getUniformLocation(shaderProgram, "allLights[" + String(i) + "].position"),
+			flatten(lightSources[i].getPosition()) );
+    
+		gl.uniform3fv( gl.getUniformLocation(shaderProgram, "allLights[" + String(i) + "].intensities"),
+			flatten(lightSources[i].getIntensity()) );
     }
 
-	gl.drawArrays(primitiveType, 0, objectVertexPositionBuffer.numItems); 
+    
+    if(polygon instanceof Cube){
+
+    	 gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, cubeVertexIndexBuffer);
+
+		// Drawing the triangles --- NEW --- DRAWING ELEMENTS 
+	
+		gl.drawElements(gl.TRIANGLES, cubeVertexIndexBuffer.numItems, gl.UNSIGNED_SHORT, 0);	
+	}else{
+		gl.drawArrays(primitiveType, 0, objectVertexPositionBuffer.numItems); 
+	}
 		
 		
 
@@ -260,7 +240,7 @@ function drawObjects() {
 	
 	// Global transformation !!
 	
-	globalTz = -1.5;
+	globalTz = -2.2;
 
 	
 	
@@ -272,21 +252,11 @@ function drawObjects() {
 	
 	// GLOBAL TRANSFORMATION FOR THE WHOLE SCENE
 	
-	mvMatrix = translationMatrix( 0, 0, globalTz );
+	mvMatrix = translationMatrix( 0, -0.25, globalTz );
 	
 	// Instantianting the current model
 
 	for(i = 0; i < array_objects.length;i++ ){
-		if(array_objects[i].textures()==true){
-
-			gl.activeTexture(gl.TEXTURE0);
-   
-		    
-		    gl.bindTexture(gl.TEXTURE_2D, webGLTexture[0]);
-		    
-		 
-		    gl.uniform1i(shaderProgram.samplerUniform, 0);
-		}
 		
 		drawModel( array_objects[i],
 		           mvMatrix,
@@ -307,6 +277,8 @@ var lastTime = 0;
 function animate() {
 	if(game_over){
 		clearInterval(Int3);
+		document.getElementById("info").innerHTML = "GAME OVER";
+		
 		return;
 	}
 	
@@ -322,7 +294,7 @@ function animate() {
 
 		// For every model --- Local rotations
 		
-		for(var i = 1; i < array_objects.length; i++ )
+		for(var i = 3; i < array_objects.length; i++ )
 	    {
 			if( array_objects[i].get_rotXXOn() ) {
 
@@ -358,7 +330,7 @@ function move_objects(){
 		return;
 	}
 	
-	for(i = 1; i < array_objects.length;i++ ){
+	for(i = 3; i < array_objects.length;i++ ){
 		if( car.get_tz() >= array_objects[i].get_tz() +1 && car.get_tz() <= array_objects[i].get_tz() + 1.5 && car.get_track() == array_objects[i].get_track()){
 			
 				game_over = true;
@@ -371,7 +343,7 @@ function move_objects(){
 		}
 	} 
 
-	for(i = 1; i < array_objects.length;i++ ){
+	for(i = 3; i < array_objects.length;i++ ){
 		array_objects[i].set_tz(0.5);
 	}
 
@@ -393,7 +365,6 @@ function time(){
 function objects(){
 	if(game_over){
 		clearInterval(Int1);
-		document.getElementById("info").innerHTML = "GAME OVER";
 		return;
 	}
 
@@ -428,8 +399,6 @@ function objects(){
 function create_polygon(){
 	var object_type = Math.round((Math.random()*3));
 
-
-	texture = Math.round(Math.random()); 
 	var polygon;
 
 	var track = Math.round(((Math.random()*4)-2));
@@ -440,16 +409,18 @@ function create_polygon(){
 		case 0:
 			polygon = new Cube(track);
 			polygon.set_normals(computeVertexNormals(polygon.get_vertices()));
+			
 	
 		break;
 		case 1:
 			polygon = new Piramid(track);
 			polygon.set_normals(computeVertexNormals(polygon.get_vertices()));
-
+			
 		break;
 		case 2:
 			polygon = new Cube(track);
 			polygon.set_normals(computeVertexNormals(polygon.get_vertices()));
+			
 		break;
 		case 3:
 			polygon = new Sphere(track);
@@ -457,12 +428,7 @@ function create_polygon(){
 		break;
 
 	}
-	if(texture == 1){
-		//polygon.prepare_polygon(true);	
-		polygon.prepare_polygon(false);
-	}else{
-		polygon.prepare_polygon(false);
-	}
+	
 
 	var move = 0;
 	switch(polygon.get_track()){
@@ -504,19 +470,19 @@ function start(){
     setTimeout(function(){
     	document.getElementById("info").innerHTML = "";	
     },2000)
-	Int1 = setInterval(objects,1300);
+	
 
 	if (overall_level == 1){
-
+		Int1 = setInterval(objects,1300);
 		Int2 = setInterval(move_objects, 100);
 
 	}else if(overall_level == 2){
-
+		Int1 = setInterval(objects,1100);
 		Int2 = setInterval(move_objects, 80);
 
 	}else{
-
-		Int2 = setInterval(move_objects, 60);
+		Int1 = setInterval(objects,850);
+		Int2 = setInterval(move_objects, 50);
 
 
 	} 
@@ -630,16 +596,12 @@ function runWebGL() {
 	
 	initWebGL( canvas );
 
-	shaderProgram = initShaders( gl );
+	shaderProgram = initShaders( gl);
 
 	init_car();
 	
 	setEventListeners();
 
-	initTexture("brick.png");
-
-	initTexture("velvet.png");
-	
 
 	interval_start = setInterval(start, 100);
 	

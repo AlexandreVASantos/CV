@@ -10,16 +10,21 @@ import math
 
 ##center[1.5, 0.3, -1.5] V
 def main():
+	## BL, FL, FR, BR
 	center = [(-1,0.3,1.5),(-1,0.3,-1.5),(1,0.3,-1.5),(1,0.3,1.5)]
 	r= 0.3
 	cilinder = []
-	f= open("cilinder.txt", 'w')
-	for i in range(4):
+	f= open("cilinderBL.txt", 'w')
+	f= open("cilinderFL.txt", 'w')
+	f= open("cilinderFR.txt", 'w')
+	f= open("cilinderBR.txt", 'w')
+
+	for k in range(4):
 		circle1=[]
 		circle2=[]
 		
 		cilinder = []
-		c = center[i]
+		c = center[k]
 		
 		for i in range(360):
 			radians= math.radians(i)
@@ -39,25 +44,32 @@ def main():
 				cilinder.append((circle1[i], circle1[0], c))
 		for i in range(len(circle2)):
 			if i != len(circle2)-1:
-				cilinder.append((circle2[i], (1,0.3,-1.5), circle2[i+1]))
+				cilinder.append((circle2[i],  circle2[i+1],(c[0],c[1],c[2])))
 			else:
-				cilinder.append((circle2[i], (1,0.3,-1.5), circle2[0]))
+				cilinder.append((circle2[i], circle2[0],(c[0],c[1],c[2])))
 
 		for i in range(len(circle1)):
 			if i != len(circle1)-1:
 				if i < len(circle1)/2:
-					cilinder.append((circle1[i+1], circle1[i], circle2[i]));
-					cilinder.append((circle1[i+1], circle2[i], circle2[i+1]));
+					cilinder.append((circle1[i+1], circle1[i], circle2[i]))
+					cilinder.append((circle1[i+1], circle2[i], circle2[i+1]))
 				else:
-					cilinder.append((circle1[i], circle2[i+1], circle1[i+1]));
-					cilinder.append((circle1[i], circle2[i], circle2[i+1]));
+					cilinder.append((circle1[i], circle2[i+1], circle1[i+1]))
+					cilinder.append((circle1[i], circle2[i], circle2[i+1]))
 			else:
-				cilinder.append((circle1[i], circle2[0], circle1[0]));
-				cilinder.append((circle1[i], circle2[i], circle2[0]));
+				cilinder.append((circle1[i], circle2[0], circle1[0]))
+				cilinder.append((circle1[i], circle2[i], circle2[0]))
 
 
-			
-		f= open("cilinder.txt", 'a')
+		if k == 0:
+			f= open("cilinderBL.txt", 'a')
+		elif k == 1:
+			f= open("cilinderFL.txt", 'a')
+		elif k == 2:
+			f= open("cilinderFR.txt", 'a')
+		else:	
+			f= open("cilinderBR.txt", 'a')
+		
 		count=0
 		for i in cilinder:
 			

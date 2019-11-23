@@ -41,7 +41,7 @@ var car = new Car();
 
 var wheels = new Wheels();
 
-console.log(wheels);
+console.log(wheels.get_vertices());
 
 var array_objects = [scenario,road,car, wheels];
 

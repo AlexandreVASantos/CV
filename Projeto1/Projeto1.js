@@ -27,20 +27,23 @@ var setInt2;
 
 var setInt3;
 
-game_started = false;
+var game_started = false;
 
-scenario = new Scenario();
-scenario.set_normals(computeVertexNormals(scenario.get_vertices()));
+var scenario = new Scenario();
 
-road = new Road()
-road.set_normals(computeVertexNormals(road.get_vertices()));
+
+var road = new Road()
+
 
 
 
 var car = new Car();
 
+var wheels = new Wheels();
 
-var array_objects = [scenario,road,car];
+console.log(wheels);
+
+var array_objects = [scenario,road,car, wheels];
 
 var count_click =0;
 
@@ -74,8 +77,10 @@ var cubeVertexIndexBuffer;
 
 
 function init_car(){
-
+	scenario.set_normals(computeVertexNormals(scenario.get_vertices()));
+	road.set_normals(computeVertexNormals(road.get_vertices()));
 	car.set_normals(computeVertexNormals(car.get_vertices()));
+	wheels.set_normals(computeVertexNormals(wheels.get_vertices()));
 
 	drawObjects();
 }
@@ -294,7 +299,7 @@ function animate() {
 
 		// For every model --- Local rotations
 		
-		for(var i = 3; i < array_objects.length; i++ )
+		for(var i = 4; i < array_objects.length; i++ )
 	    {
 			if( array_objects[i].get_rotXXOn() ) {
 
@@ -330,7 +335,7 @@ function move_objects(){
 		return;
 	}
 	
-	for(i = 3; i < array_objects.length;i++ ){
+	for(i = 4; i < array_objects.length;i++ ){
 		if( car.get_tz() >= array_objects[i].get_tz() +1 && car.get_tz() <= array_objects[i].get_tz() + 1.5 && car.get_track() == array_objects[i].get_track()){
 			
 				game_over = true;
@@ -343,7 +348,7 @@ function move_objects(){
 		}
 	} 
 
-	for(i = 3; i < array_objects.length;i++ ){
+	for(i = 4; i < array_objects.length;i++ ){
 		array_objects[i].set_tz(0.5);
 	}
 
@@ -523,7 +528,9 @@ function setEventListeners(){
 						if (count_click > -2){
 							car.set_tx(-0.5);
 							car.set_track(-1);
-							//angleZZ-=5;
+							wheels.set_tx(-0.5);
+							wheels.set_track(-1);
+							
 							count_click--;	
 						} 
 
@@ -531,8 +538,10 @@ function setEventListeners(){
 					case 100:
 						if (count_click < 2){
 							car.set_tx(0.5);
-							//angleZZ+=5;
 							car.set_track(1);
+							wheels.set_tx(0.5);
+							wheels.set_track(1);
+							
 							count_click++;	
 						} 
 					break;

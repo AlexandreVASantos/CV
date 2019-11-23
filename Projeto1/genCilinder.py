@@ -11,7 +11,7 @@ import math
 ##center[1.5, 0.3, -1.5] V
 def main():
 	## BL, FL, FR, BR
-	center = [(-1,0.3,1.5),(-1,0.3,-1.5),(1,0.3,-1.5),(1,0.3,1.5)]
+	center = [(-1,0.2,1.4),(-1,0.2,-1.4),(1,0.2,-1.4),(1,0.2,1.4)]
 	r= 0.3
 	cilinder = []
 	f= open("cilinderBL.txt", 'w')
@@ -25,18 +25,27 @@ def main():
 		
 		cilinder = []
 		c = center[k]
-		
-		for i in range(360):
-			radians= math.radians(i)
-			circle1.append((c[0],math.sin(radians)*r + c[1] ,math.cos(radians)*r + c[2] ))
+		if k >= 2:
+			for i in range(360,-1,-1):
+				radians= math.radians(i)
+				circle1.append((c[0],math.sin(radians)*r + c[1] ,math.cos(radians)*r + c[2] ))
 
-		for i in range(360):
-			radians= math.radians(i)
-			if c[0] == -1:
+			for i in range(360,-1,-1):
+				radians= math.radians(i)
+				if c[0] == -1:
+					circle2.append((c[0] + 0.2,math.sin(radians)*r + c[1] ,math.cos(radians)*r + c[2] ))
+				else:
+					circle2.append((c[0] - 0.2,math.sin(radians)*r + c[1] ,math.cos(radians)*r + c[2] ))
+			
+		else:
+			for i in range(360):
+				radians= math.radians(i)
+				circle1.append((c[0],math.sin(radians)*r + c[1] ,math.cos(radians)*r + c[2] ))
+
+			for i in range(360):
+				radians= math.radians(i)
 				circle2.append((c[0] + 0.2,math.sin(radians)*r + c[1] ,math.cos(radians)*r + c[2] ))
-			else:
-				circle2.append((c[0] - 0.2,math.sin(radians)*r + c[1] ,math.cos(radians)*r + c[2] ))
-
+			
 		for i in range(len(circle1)):
 			if i != len(circle1)-1:
 				cilinder.append((circle1[i], circle1[i+1], c))

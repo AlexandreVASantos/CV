@@ -26,6 +26,7 @@ var setInt1;
 var setInt2;
 
 var setInt3;
+var timeCounter;
 
 var game_started = false;
 
@@ -281,7 +282,7 @@ var lastTime = 0;
 
 function animate() {
 	if(game_over){
-		clearInterval(Int3);
+		clearInterval(setInt3);
 		document.getElementById("info").innerHTML = "GAME OVER";
 		
 		return;
@@ -331,7 +332,7 @@ function move_objects(){
 			
 
 	if(game_over){
-		clearInterval(Int2);
+		clearInterval(setInt2);
 		return;
 	}
 	
@@ -357,8 +358,22 @@ function move_objects(){
 
 }
 
+var countsec =0;
 
+var countmin =0;
 function time(){
+	if(game_over){
+		clearInterval(timeCounter);
+	}
+	if (countsec == 59){
+		countsec =0;
+		countmin +=1;
+	}else{
+		countsec +=1;
+	}
+	
+	document.getElementById("counter").innerHTML = countmin + " min " + countsec+ " sec"
+	
 
 	
 
@@ -366,10 +381,32 @@ function time(){
 
 }
 
+
+function score(){
+
+	if(game_over){
+		if (document.getElementById("score").innerHTML != "") {
+			document.getElementById("score").innerHTML = "";
+
+		}else{
+			document.getElementById("score").innerHTML = parseInt(time,10) * score * overall_level;
+		}
+		return;
+	}
+
+	score = parseInt(document.getElementById("counterObj").innerHTML, 10);
+	time = (document.getElementById("counter").innerHTML).split(" ");
+	time = time[0]*60 + time[2];
+
+
+	document.getElementById("score").innerHTML = parseInt(time,10) * score * overall_level;
+
+}
+
 //Creates obstacles
 function objects(){
 	if(game_over){
-		clearInterval(Int1);
+		clearInterval(setInt1);
 		return;
 	}
 
@@ -471,33 +508,41 @@ function start(){
     	return;
     }else{
 
-    document.getElementById("info").innerHTML = "The game has started";
-    setTimeout(function(){
-    	document.getElementById("info").innerHTML = "";	
-    },2000)
-	
+    	
 
-	if (overall_level == 1){
-		Int1 = setInterval(objects,1300);
-		Int2 = setInterval(move_objects, 100);
-
-	}else if(overall_level == 2){
-		Int1 = setInterval(objects,1100);
-		Int2 = setInterval(move_objects, 80);
-
-	}else{
-		Int1 = setInterval(objects,850);
-		Int2 = setInterval(move_objects, 50);
+	    document.getElementById("info").innerHTML = "The game has started";
+	    setTimeout(function(){
+	    	document.getElementById("info").innerHTML = "";	
+	    },2000)
+		
 
 
-	} 
-	Int3 = setInterval(animate, 1);
+		if (overall_level == 1){
+			setInt1 = setInterval(objects,1300);
+			setInt2 = setInterval(move_objects, 100);
 
-	CountTime = setInterval(time, 1000);
+		}else if(overall_level == 2){
+			setInt1 = setInterval(objects,1100);
+			setInt2 = setInterval(move_objects, 80);
 
-    }
+		}else{
+			setInt1 = setInterval(objects,850);
+			setInt2 = setInterval(move_objects, 50);
 
-    clearInterval(interval_start);
+
+		} 
+		setInt3 = setInterval(animate, 1);
+
+
+		timeCounter = setInterval(time,1000);
+
+    	scoreoverall = setInterval(score, 100);
+
+		
+	    }
+
+	    clearInterval(interval_start);
+
 }
 
 //----------------------------------------------------------------------------
@@ -600,6 +645,9 @@ function initWebGL( canvas ) {
 //----------------------------------------------------------------------------
 
 function runWebGL() {
+
+	game_started = false;
+	game_over = false;
 	
 	var canvas = document.getElementById("my-canvas");
 	

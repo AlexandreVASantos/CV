@@ -207,11 +207,6 @@ lightSources[3].setIntensity( 0.0, 0.0, 1.0 );
 
 lightSources[3].setAmbIntensity( 0.0, 0.0, 1.0 );
 
-lightSources[3].switchRotYYOn();
-
-lightSources[3].setRotationSpeed( 30.0 );
-
-
 
 // Light source 4
 
@@ -222,10 +217,6 @@ lightSources[4].setPosition( 0.0, 0.0, 0.0, 1.0 );
 lightSources[4].setIntensity( 0.0, 1.0, 0.0 );
 
 lightSources[4].setAmbIntensity( 0.0, 1.0 , 0.0 );
-
-lightSources[4].switchRotYYOn();
-
-lightSources[4].setRotationSpeed( 5.0 );
 
 
 // Light source 5

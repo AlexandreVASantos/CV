@@ -32,10 +32,7 @@ def main():
 
 			for i in range(360,-1,-1):
 				radians= math.radians(i)
-				if c[0] == -1:
-					circle2.append((c[0] + 0.2,math.sin(radians)*r + c[1] ,math.cos(radians)*r + c[2] ))
-				else:
-					circle2.append((c[0] - 0.2,math.sin(radians)*r + c[1] ,math.cos(radians)*r + c[2] ))
+				circle2.append((c[0] - 0.2,math.sin(radians)*r + c[1] ,math.cos(radians)*r + c[2] ))
 			
 		else:
 			for i in range(360):

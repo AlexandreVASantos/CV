@@ -407,6 +407,13 @@ function score(){
 function objects(){
 	if(game_over){
 		clearInterval(setInt1);
+
+		setTimeout(function(){
+			request = window.confirm("Would you like to play again?");
+			if (request){
+				window.location.reload(false);
+			}
+		},5000)
 		return;
 	}
 

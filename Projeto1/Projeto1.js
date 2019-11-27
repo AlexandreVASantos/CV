@@ -283,6 +283,7 @@ var lastTime = 0;
 function animate() {
 	if(game_over){
 		clearInterval(setInt3);
+		document.getElementById("info").style.color = "red";
 		document.getElementById("info").innerHTML = "GAME OVER";
 		
 		return;
@@ -333,13 +334,15 @@ function move_objects(){
 
 	if(game_over){
 		clearInterval(setInt2);
+		document.getElementById("counterObj").style.color = "red"; 
 		return;
 	}
 	
 	for(i = 4; i < array_objects.length;i++ ){
-		if( car.get_tz() >= array_objects[i].get_tz() +1 && car.get_tz() <= array_objects[i].get_tz() + 1.5 && car.get_track() == array_objects[i].get_track()){
+		if(car.get_tz() >= array_objects[i].get_tz()-0.5  && car.get_tz() <= array_objects[i].get_tz()+1 && car.get_track() == array_objects[i].get_track()){
 			
 				game_over = true;
+				return;
 		}
 		if(array_objects[i].get_tz() >= car.get_tz()){
 			array_objects.splice(i,1);
@@ -363,6 +366,8 @@ var countsec =0;
 var countmin =0;
 function time(){
 	if(game_over){
+		document.getElementById("counter").style.color = "red";
+	
 		clearInterval(timeCounter);
 	}
 	if (countsec == 59){
@@ -575,13 +580,35 @@ function setEventListeners(){
 				
 			var key = event.keyCode; // ASCII
 			if (game_started && !game_over){
+
+				var l;
+				if(array_objects.length > 9){
+					l = 9;
+				}else{
+					l = array_objects.length;
+				}
 				switch(key){
 					case 97:
 						if (count_click > -2){
-							car.set_tx(-0.5);
+							
+
+							for(i = 4; i < l;i++ ){
+								if( car.get_tz() >= array_objects[i].get_tz() - 0.5 && car.get_tz() <= array_objects[i].get_tz()+1   && car.get_track()-1 == array_objects[i].get_track()){
+										game_over = true;
+										car.set_tx(-0.1);
+										
+										wheels.set_tx(-0.1);
+									
+										drawObjects();
+										
+										return;
+								}
+							}
 							car.set_track(-1);
-							wheels.set_tx(-0.5);
 							wheels.set_track(-1);
+							car.set_tx(-0.5);
+							wheels.set_tx(-0.5);
+						
 							
 							count_click--;	
 						} 
@@ -589,10 +616,24 @@ function setEventListeners(){
 					break;
 					case 100:
 						if (count_click < 2){
+							
+							for(i = 4; i < l;i++ ){
+								if( car.get_tz() >= array_objects[i].get_tz() - 0.5 && car.get_tz() <= array_objects[i].get_tz() +1 && car.get_track()+1 == array_objects[i].get_track()){
+										game_over = true;
+										car.set_tx(0.1);
+										
+										wheels.set_tx(0.1);
+										
+										drawObjects();
+										
+										return;
+								}
+							}
 							car.set_tx(0.5);
 							car.set_track(1);
-							wheels.set_tx(0.5);
 							wheels.set_track(1);
+							wheels.set_tx(0.5);
+							
 							
 							count_click++;	
 						} 

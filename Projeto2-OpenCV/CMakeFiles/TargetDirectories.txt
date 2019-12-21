@@ -1,3 +1,0 @@
-/home/alexandre/Desktop/CV/Projeto/CMakeFiles/rebuild_cache.dir
-/home/alexandre/Desktop/CV/Projeto/CMakeFiles/p.dir
-/home/alexandre/Desktop/CV/Projeto/CMakeFiles/edit_cache.dir

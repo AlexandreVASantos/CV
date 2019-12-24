@@ -2,7 +2,7 @@
 #include "opencv2/highgui/highgui.hpp"
 #include "opencv2/imgproc/imgproc.hpp"
 #include "opencv2/core/core.hpp"
-
+#include <stdlib.h>   
 #include <iostream>
 #include <map>
 #include <string>
@@ -51,16 +51,18 @@ int main(){
   keyValueOperators.insert(make_pair<string,list<int> > ("*",{1,1,1,1,1,1,1,1}) );
   keyValueOperators.insert(make_pair<string,list<int> > ("/",{0,1,0,0,0,1,0,0}) );
   
- /*
-  vector<string> retval;
-  for (auto const& element : keyValueOperators) {
-    retval.push_back(element.first);
+
+  list<int> numb;
+  list<string> op;
+  
+  for (auto const& element : keyValueNumbers) {
+    numb.push_back(element.first);
   }
 
-  for( string key : retval){
-    cout << key << endl;
+  for (auto const& element : keyValueOperators) {
+    op.push_back(element.first);
+  }
 
-  } */
     
   // Check if camera opened successfully
   if(!cap.isOpened()){
@@ -72,6 +74,8 @@ int main(){
  
     Mat frame;
     Mat framet;
+
+
    
     // Capture frame-by-frame
     cap >> frame;
@@ -93,44 +97,166 @@ int main(){
     cvtColor( frame, frame, COLOR_BGR2GRAY );
     blur( frame, frame, Size(3,3) );
     // Binary Threshold
-    threshold(frame,framet, thresh, maxValue, THRESH_BINARY );
+    threshold(frame,framet, thresh, maxValue, THRESH_BINARY_INV);
     framet = morphologicalOpeningClosing(framet); //Operaçoes Morfologicas de opening e closing para eliminar gaps
 
+            
+    
+    imshow("bla", framet);
     
     Mat canny_output;
     vector<Vec4i> hierarchy;
     vector<vector<Point> > contours;
     
     /// Detect edges using canny
-    Canny( framet, canny_output, thresh, thresh*2, 3 );
+    Canny( framet, canny_output, thresh, thresh*2, 7 );
+
+
+
+
     /// Find contours
     findContours( canny_output, contours, hierarchy, RETR_TREE, CHAIN_APPROX_SIMPLE , Point(0, 0) );
-    for(int i =0 ;i< contours.size();i++){
-      cout << contours[i] << endl;
-    }
+    
     Mat drawing = Mat::zeros( canny_output.size(), CV_8UC3 );
+
+
+    
    
     vector<vector<Point> > contours_poly( contours.size() );
     vector<Rect> boundRect( contours.size() );
+
+    
     
     for( size_t i = 0; i < contours.size(); i++ )
     {
         approxPolyDP( contours[i], contours_poly[i], 3, true );
         boundRect[i] = boundingRect( contours_poly[i] );
     }
-
+  
     for( size_t i = 0; i< contours.size(); i++ )
     {
-        drawContours( drawing, contours, (int)i, Scalar(0, 255, 0 ), 2, LINE_8, hierarchy, 0 );
-        rectangle( drawing, boundRect[i].tl(), boundRect[i].br(), Scalar(255, 0, 0 ), 2 );
+        drawContours( drawing, contours, (int)i, Scalar(0, 255, 0 ), 1, LINE_8, hierarchy, 0 );
+        rectangle( drawing, boundRect[i].tl(), boundRect[i].br(), Scalar(255, 0, 0 ), 1 );
 
     }
+    
+      // Mat nonZeroCoordinates;
+      // findNonZero(framet, nonZeroCoordinates);
+      // for (int i = 0; i < nonZeroCoordinates.total(); i++ ) {
+      //     cout << "NONZero#" << i << ": " << nonZeroCoordinates.at<Point>(i).x << ", " << nonZeroCoordinates.at<Point>(i).y << endl;
+      // }
 
     for( Rect r : boundRect)
-    {
-      cout << r << endl;
-    }
+    {   
+      
+      cout << r.area() << endl;
+      
+      
+      if (r.area() > framet.cols * framet.rows * 0.05){
+      
+      
+        int centerSegY = r.height/14;
+        int centerSegX = r.width/8;
+        
+        Point SegDivided[14] = { Point(r.x+centerSegX,r.y+centerSegY), Point(r.x + r.width-centerSegX,r.y+centerSegY) , Point(r.x + r.width-centerSegX,r.y + centerSegY), Point(r.x + r.width -centerSegX,r.y + r.height/2 - centerSegY), Point(r.x + r.width - centerSegX,r.y + r.height/2 + centerSegY), Point(r.x + r.width - centerSegX,r.y + r.height - centerSegY ),Point(r.x + centerSegX,r.y + r.height - centerSegY), Point(r.x + r.width -  centerSegX,r.y + r.height - centerSegY), Point(r.x + centerSegX,r.y + r.height/2 + centerSegY), Point(r.x + centerSegX,r.y + r.height- centerSegY), Point(r.x + centerSegX,r.y + centerSegY), Point(r.x + centerSegX,r.y + r.height/2 - centerSegY), Point(r.x + centerSegX,r.y + r.height/2 ), Point(r.x  + r.width- centerSegX,r.y + r.height/2) };
+        
+        int count =0;
+        Point tmp;
+        
+        list<int> SegmentsNormalized;
+        
+        for(Point p : SegDivided){
+          int total;
+          float value;
+          
 
+          Mat Segments;
+        
+          if ( count!=0 && count%2 !=0){
+           
+            if (tmp.x < p.x){
+              
+              total = r.width;
+              for (int i =tmp.x ;i< p.x;i++){
+                Segments.push_back(framet.at<int>(i,p.y));
+
+              }
+              
+              value = countNonZero(Segments)/total;
+              if (value > 0.80){
+                SegmentsNormalized.push_back(1);
+              }else{
+                SegmentsNormalized.push_back(0);
+                
+              }
+
+            }else{
+              cout << count << endl;
+              for (int i =tmp.y ;i< p.y ;i++){
+
+                Segments.push_back(framet.at<int>(p.x,i));
+              }
+
+
+              total = r.height/2;
+              value = countNonZero(Segments)/total;
+
+
+
+              if (value > 0.80){
+                SegmentsNormalized.push_back(1);
+              }else{
+                SegmentsNormalized.push_back(0);
+                
+              }
+
+
+            }
+
+
+            Segments.release();
+
+
+          
+
+            
+            
+          }else{
+            tmp = p;
+            
+          }
+          
+          count++;
+          
+         
+          
+      }
+      // cout << "\nSeg"<< endl;
+        
+      // for( int key : SegmentsNormalized){
+      //   cout << key << endl;
+        
+     
+        
+        
+      // }
+    
+
+      // for( int key : numb){
+      //   cout << "\nList"<< endl;
+      //   if(keyValueNumbers[key] == SegmentsNormalized){
+      //     cout << "\nEqual"<< endl;
+          
+      //   } 
+          
+        
+      // }
+      
+
+       SegmentsNormalized.clear();
+      
+      }
+    }
     
     imshow( "Contours", drawing );
    

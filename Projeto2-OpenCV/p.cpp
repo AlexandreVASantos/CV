@@ -140,23 +140,22 @@ int main(){
 
     }
     
-      // Mat nonZeroCoordinates;
-      // findNonZero(framet, nonZeroCoordinates);
-      // for (int i = 0; i < nonZeroCoordinates.total(); i++ ) {
-      //     cout << "NONZero#" << i << ": " << nonZeroCoordinates.at<Point>(i).x << ", " << nonZeroCoordinates.at<Point>(i).y << endl;
-      // }
+    // Mat nonZeroCoordinates;
+    // findNonZero(framet, nonZeroCoordinates);
+    // for (int i = 0; i < nonZeroCoordinates.total(); i++ ) {
+        
+    //     cout << "FRAMET" << i << ": " << framet.at<Point>(nonZeroCoordinates.at<Point>(i).x, nonZeroCoordinates.at<Point>(i).y) << endl;
+    //     cout << "NONZero#" << i << ": " << nonZeroCoordinates.at<Point>(i).x << ", " << nonZeroCoordinates.at<Point>(i).y << endl;
+    // }
 
     for( Rect r : boundRect)
     {   
       
-      cout << r.area() << endl;
-      
-      
       if (r.area() > framet.cols * framet.rows * 0.05){
       
       
-        int centerSegY = r.height/14;
-        int centerSegX = r.width/8;
+        int centerSegY = r.height / 14;
+        int centerSegX = r.width / 8;
         
         Point SegDivided[14] = { Point(r.x+centerSegX,r.y+centerSegY), Point(r.x + r.width-centerSegX,r.y+centerSegY) , Point(r.x + r.width-centerSegX,r.y + centerSegY), Point(r.x + r.width -centerSegX,r.y + r.height/2 - centerSegY), Point(r.x + r.width - centerSegX,r.y + r.height/2 + centerSegY), Point(r.x + r.width - centerSegX,r.y + r.height - centerSegY ),Point(r.x + centerSegX,r.y + r.height - centerSegY), Point(r.x + r.width -  centerSegX,r.y + r.height - centerSegY), Point(r.x + centerSegX,r.y + r.height/2 + centerSegY), Point(r.x + centerSegX,r.y + r.height- centerSegY), Point(r.x + centerSegX,r.y + centerSegY), Point(r.x + centerSegX,r.y + r.height/2 - centerSegY), Point(r.x + centerSegX,r.y + r.height/2 ), Point(r.x  + r.width- centerSegX,r.y + r.height/2) };
         
@@ -170,7 +169,8 @@ int main(){
           float value;
           
 
-          Mat Segments;
+          Mat Segments;    
+
         
           if ( count!=0 && count%2 !=0){
            
@@ -178,12 +178,13 @@ int main(){
               
               total = r.width;
               for (int i =tmp.x ;i< p.x;i++){
-                Segments.push_back(framet.at<int>(i,p.y));
+                Segments.push_back((int)framet.at<uchar>(i, p.y));
 
               }
-              
-              value = countNonZero(Segments)/total;
-              if (value > 0.80){
+
+           
+              value = (float)countNonZero(Segments) / (float)total;
+              if (value > 0.60){
                 SegmentsNormalized.push_back(1);
               }else{
                 SegmentsNormalized.push_back(0);
@@ -191,19 +192,20 @@ int main(){
               }
 
             }else{
-              cout << count << endl;
+             
               for (int i =tmp.y ;i< p.y ;i++){
 
-                Segments.push_back(framet.at<int>(p.x,i));
+                Segments.push_back((int)framet.at<uchar>(p.x,i));
               }
 
 
-              total = r.height/2;
-              value = countNonZero(Segments)/total;
+              total = r.height / 2;
+              
+              value = (float)countNonZero(Segments) / (float)total;
 
 
 
-              if (value > 0.80){
+              if (value > 0.60){
                 SegmentsNormalized.push_back(1);
               }else{
                 SegmentsNormalized.push_back(0);
@@ -213,7 +215,8 @@ int main(){
 
             }
 
-
+            
+            
             Segments.release();
 
 
@@ -242,18 +245,26 @@ int main(){
       // }
     
 
-      // for( int key : numb){
-      //   cout << "\nList"<< endl;
-      //   if(keyValueNumbers[key] == SegmentsNormalized){
-      //     cout << "\nEqual"<< endl;
+      for( int key : numb){
+        if(keyValueNumbers[key] == SegmentsNormalized){
+          cout << "\nEqual"<< endl;
+          cout << "\nNumber: " << key << endl;
           
-      //   } 
+          
+        } 
           
         
-      // }
+      }
       
 
+
+
+
+
        SegmentsNormalized.clear();
+
+
+
       
       }
     }

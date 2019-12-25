@@ -29,9 +29,12 @@ Mat morphologicalOpeningClosing(Mat imgThresholded){
 
 
 int main(){
- 
-  // Create a VideoCapture object and open the input file
-  // If the input is the web camera, pass 0 instead of the video file name
+  
+  // char a = '23', b = '3';
+  // cout << a - 48 + b-48 << endl;
+  
+  // Create a VideoCapture object, 0 for the webCam
+
   VideoCapture cap(0); 
   map <int,list<int> > keyValueNumbers;
   keyValueNumbers.insert(make_pair<int,list<int> > (0,{1,1,1,1,1,1,0}) );
@@ -45,15 +48,15 @@ int main(){
   keyValueNumbers.insert(make_pair<int,list<int> > (8,{1,1,1,1,1,1,1}) );
   keyValueNumbers.insert(make_pair<int,list<int> > (9,{1,1,1,1,0,1,1}) );
   
-  map <string,list<int> > keyValueOperators;
-  keyValueOperators.insert(make_pair<string,list<int> > ("+",{1,0,1,0,1,0,1,0}) );
-  keyValueOperators.insert(make_pair<string,list<int> > ("-",{0,0,1,0,0,0,1,0}) );
-  keyValueOperators.insert(make_pair<string,list<int> > ("*",{1,1,1,1,1,1,1,1}) );
-  keyValueOperators.insert(make_pair<string,list<int> > ("/",{0,1,0,0,0,1,0,0}) );
+  map <char,list<int> > keyValueOperators;
+  keyValueOperators.insert(make_pair<char,list<int> > ('+',{1,0,1,0,1,0,1,0}) );
+  keyValueOperators.insert(make_pair<char,list<int> > ('-',{0,0,1,0,0,0,1,0}) );
+  keyValueOperators.insert(make_pair<char,list<int> > ('*',{1,1,1,1,1,1,1,1}) );
+  keyValueOperators.insert(make_pair<char,list<int> > ('/',{0,1,0,0,0,1,0,0}) );
   
-
+  list<char> calculation;
   list<int> numb;
-  list<string> op;
+  list<char> op;
   
   for (auto const& element : keyValueNumbers) {
     numb.push_back(element.first);
@@ -249,6 +252,7 @@ int main(){
       for( int key : numb){
         if(keyValueNumbers[key] == SegmentsNormalized){
           isNumber = true;
+          calculation.push_back((char)key);
           cout << "\nEqual"<< endl;
           cout << "\nNumber: " << key << endl;
           
@@ -261,6 +265,7 @@ int main(){
 
       //Check for Operators
       if(!isNumber){
+        SegmentsNormalized.clear();
         
         for(Point p : SegDivided){
           count =0;
@@ -348,20 +353,117 @@ int main(){
           
          
           
-      }
+        }
 
       }
 
+      bool isOp = false;
+      for( int key : op){
+        if(keyValueOperators[key] == SegmentsNormalized){
+          isOp = true;
+          calculation.push_back((char)key);
+          cout << "\nEqual"<< endl;
+          cout << "\nNumber: " << key << endl;
+          
+          
+        } 
+          
+        
+      }
+
+      if(!isOp){
+        calculation.push_back('e');
+      }
 
 
 
 
-       SegmentsNormalized.clear();
+
+      SegmentsNormalized.clear();
 
 
 
       
       }
+
+
+    }
+
+    list<char>::iterator it;
+
+    list<char>::iterator it1;
+
+    list<char>::iterator it2;
+
+    bool error = false;
+    bool O = false;
+    bool N = false;
+    char Lop = '0';
+    string sum_tmp;
+    int calc = -1;
+    sum_tmp += calculation.front();
+
+    char tmp = sum_tmp[0];
+    calculation.pop_front();
+    it = find(op.begin(), op.end(), tmp);
+    //Check for operator
+    if( it != op.end()){
+      calculation.push_front('e');
+    }
+
+    for(char n : calculation){
+      // Fetch the iterator of element with value 'the'
+  	  if(n == 'e'){
+        error = true;
+        break;
+      }
+
+      it1 = find(op.begin(), op.end(), n);
+      //Check for operator
+      if( it1 != op.end()){
+        O = true;
+        if (calc != -1){
+          if(Lop == '/'){
+            calc = calc / stoi(sum_tmp);
+          }else if(Lop == '*'){
+            calc = calc * stoi(sum_tmp);
+          }else if(Lop == '+'){
+            calc = calc + stoi(sum_tmp);
+          }else{
+            calc = calc - stoi(sum_tmp);
+          }
+        }else{
+          calc = stoi(sum_tmp);
+        }
+
+        Lop = n;
+        sum_tmp = "";
+
+      } 
+
+      it2 = find(op.begin(), op.end(), n);
+      //Check for operator
+      if( it1 != op.end()){
+        N = true;
+        sum_tmp += n;
+      }
+
+      if(!N && !O){
+        error = true;
+        break;
+      }
+
+
+    }
+
+    if(error){
+      cout << "Não foi possível descodificar a sua conta" << endl;
+    }else{
+      for(char n : calculation){
+        cout << n << calc << endl;
+      }
+      cout << "Resultado: " << calc << endl;
+      
     }
     
     imshow( "Contours", drawing );

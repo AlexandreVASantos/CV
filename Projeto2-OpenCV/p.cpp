@@ -156,10 +156,10 @@ int main(){
       
         int centerSegY = r.height / 14;
         int centerSegX = r.width / 8;
-        
+                                /////////////////////////////////////0/////////////////////////////////////////////////N////////////////////////////////////////////////1///////////////////////////////////////////////////////////////N////////////////////////////////////////////////////////////////2//////////////////////////////////////////////////////////////N/////////////////////////////////////////////////////3///////////////////////////////////////////////////////////////N//////////////////////////////////////////////////////4//////////////////////////////////////////////////N//////////////////////////////////////////5/////////////////////////////////////////////////////N//////////////////////////////////////////6/////////////////////////////////////////////////////
         Point SegDivided[14] = { Point(r.x+centerSegX,r.y+centerSegY), Point(r.x + r.width-centerSegX,r.y+centerSegY) , Point(r.x + r.width-centerSegX,r.y + centerSegY), Point(r.x + r.width -centerSegX,r.y + r.height/2 - centerSegY), Point(r.x + r.width - centerSegX,r.y + r.height/2 + centerSegY), Point(r.x + r.width - centerSegX,r.y + r.height - centerSegY ),Point(r.x + centerSegX,r.y + r.height - centerSegY), Point(r.x + r.width -  centerSegX,r.y + r.height - centerSegY), Point(r.x + centerSegX,r.y + r.height/2 + centerSegY), Point(r.x + centerSegX,r.y + r.height- centerSegY), Point(r.x + centerSegX,r.y + centerSegY), Point(r.x + centerSegX,r.y + r.height/2 - centerSegY), Point(r.x + centerSegX,r.y + r.height/2 ), Point(r.x  + r.width- centerSegX,r.y + r.height/2) };
-        
-        int count =0;
+        Point SegDividedOp[16];
+        int count;
         Point tmp;
         
         list<int> SegmentsNormalized;
@@ -168,15 +168,16 @@ int main(){
           int total;
           float value;
           
-
+          count =0;
           Mat Segments;    
 
         
           if ( count!=0 && count%2 !=0){
+            
            
             if (tmp.x < p.x){
               
-              total = r.width;
+              total = r.width - 2*centerSegX;
               for (int i =tmp.x ;i< p.x;i++){
                 Segments.push_back((int)framet.at<uchar>(i, p.y));
 
@@ -184,7 +185,7 @@ int main(){
 
            
               value = (float)countNonZero(Segments) / (float)total;
-              if (value > 0.60){
+              if (value > 0.70){
                 SegmentsNormalized.push_back(1);
               }else{
                 SegmentsNormalized.push_back(0);
@@ -199,13 +200,13 @@ int main(){
               }
 
 
-              total = r.height / 2;
+              total = (r.height / 2) - (2*centerSegY);
               
               value = (float)countNonZero(Segments) / (float)total;
 
 
 
-              if (value > 0.60){
+              if (value > 0.70){
                 SegmentsNormalized.push_back(1);
               }else{
                 SegmentsNormalized.push_back(0);
@@ -244,9 +245,10 @@ int main(){
         
       // }
     
-
+      bool isNumber = false;
       for( int key : numb){
         if(keyValueNumbers[key] == SegmentsNormalized){
+          isNumber = true;
           cout << "\nEqual"<< endl;
           cout << "\nNumber: " << key << endl;
           
@@ -256,6 +258,99 @@ int main(){
         
       }
       
+
+      //Check for Operators
+      if(!isNumber){
+        
+        for(Point p : SegDivided){
+          count =0;
+          int total;
+          float value;
+          
+
+          Mat Segments;    
+
+        
+          if ( count!=0 && count%2 !=0){
+           
+            if (tmp.x < p.x){
+              if(tmp.y < p.y){
+                int count_y = tmp.y;
+                for (int i =tmp.x ;i< p.x;i++){
+                  Segments.push_back((int)framet.at<uchar>(i, count_y));
+                  count_y++;
+
+                }
+              }else if (tmp.y > p.y){
+                int count_y = tmp.y;
+                for (int i =tmp.x ;i< p.x;i++){
+                  Segments.push_back((int)framet.at<uchar>(i, count_y));
+                  count_y--;
+
+                }
+              }else{
+                for (int i =tmp.x ;i< p.x;i++){
+                  Segments.push_back((int)framet.at<uchar>(i, p.y));
+                }
+              }
+
+              total = r.width - 2*centerSegX;
+              
+
+           
+              value = (float)countNonZero(Segments) / (float)total;
+              if (value > 0.70){
+                SegmentsNormalized.push_back(1);
+              }else{
+                SegmentsNormalized.push_back(0);
+                
+              }
+
+            }else{
+             
+              for (int i =tmp.y ;i< p.y ;i++){
+
+                Segments.push_back((int)framet.at<uchar>(p.x,i));
+              }
+
+
+              total = (r.height / 2) - (2*centerSegY);
+              
+              value = (float)countNonZero(Segments) / (float)total;
+
+
+
+              if (value > 0.70){
+                SegmentsNormalized.push_back(1);
+              }else{
+                SegmentsNormalized.push_back(0);
+                
+              }
+
+
+            }
+
+            
+            
+            Segments.release();
+
+
+          
+
+            
+            
+          }else{
+            tmp = p;
+            
+          }
+          
+          count++;
+          
+         
+          
+      }
+
+      }
 
 
 

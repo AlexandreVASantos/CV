@@ -148,7 +148,6 @@ int main(){
     list<int> SegmentsNormalized;
     Mat Segments = Mat(); 
 
-    cout << framet.type() << endl;
 
     for( Rect r : boundRect)
     {   
@@ -325,20 +324,20 @@ int main(){
                 if(tmp.y < p.y){
                   int count_y = tmp.y;
                   for (int i =tmp.x ;i< p.x;i++){
-                    Segments.push_back((int)framet.at<uchar>(i, count_y));
+                    Segments.push_back((int)framet.at<uchar>( count_y,i));
                     count_y++;
 
                   }
                 }else if (tmp.y > p.y){
                   int count_y = tmp.y;
                   for (int i =tmp.x ;i< p.x;i++){
-                    Segments.push_back((int)framet.at<uchar>(i, count_y));
+                    Segments.push_back((int)framet.at<uchar>( count_y,i));
                     count_y--;
 
                   }
                 }else{
                   for (int i =tmp.x ;i< p.x;i++){
-                    Segments.push_back((int)framet.at<uchar>(i, p.y));
+                    Segments.push_back((int)framet.at<uchar>(p.y,i ));
                   }
                 }
 
@@ -358,7 +357,7 @@ int main(){
               
                 for (int i =tmp.y ;i< p.y ;i++){
 
-                  Segments.push_back((int)framet.at<uchar>(p.x,i));
+                  Segments.push_back((int)framet.at<uchar>(i, p.x));
                 }
 
 

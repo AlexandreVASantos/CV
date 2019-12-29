@@ -101,11 +101,10 @@ int main(){
     blur( frame, frame, Size(3,3) );
     // Binary Threshold
     threshold(frame,framet, thresh, maxValue, THRESH_BINARY_INV);
+
     framet = morphologicalOpeningClosing(framet); //Operaçoes Morfologicas de opening e closing para eliminar gaps
 
             
-    
-    imshow("bla", framet);
     
     Mat canny_output;
     vector<Vec4i> hierarchy;
@@ -146,11 +145,11 @@ int main(){
     int centerSegY;
     int centerSegX;
     
-    Point SegDividedOp[16];
-
     list<int> SegmentsNormalized;
-    Mat Segments; 
-        
+    Mat Segments = Mat(); 
+
+    cout << framet.type() << endl;
+
     for( Rect r : boundRect)
     {   
       
@@ -158,9 +157,62 @@ int main(){
       
         centerSegY = r.height / 14;
         centerSegX = r.width / 8;
-                                /////////////////////////////////////0/////////////////////////////////////////////////N////////////////////////////////////////////////1///////////////////////////////////////////////////////////////N////////////////////////////////////////////////////////////////2//////////////////////////////////////////////////////////////N/////////////////////////////////////////////////////3///////////////////////////////////////////////////////////////N//////////////////////////////////////////////////////4//////////////////////////////////////////////////N//////////////////////////////////////////5/////////////////////////////////////////////////////N//////////////////////////////////////////6/////////////////////////////////////////////////////
-        Point SegDivided[14] = { Point(r.x+centerSegX,r.y+centerSegY), Point(r.x + r.width-centerSegX,r.y+centerSegY) , Point(r.x + r.width-centerSegX,r.y + centerSegY), Point(r.x + r.width -centerSegX,r.y + r.height/2 - centerSegY), Point(r.x + r.width - centerSegX,r.y + r.height/2 + centerSegY), Point(r.x + r.width - centerSegX,r.y + r.height - centerSegY ),Point(r.x + centerSegX,r.y + r.height - centerSegY), Point(r.x + r.width -  centerSegX,r.y + r.height - centerSegY), Point(r.x + centerSegX,r.y + r.height/2 + centerSegY), Point(r.x + centerSegX,r.y + r.height- centerSegY), Point(r.x + centerSegX,r.y + centerSegY), Point(r.x + centerSegX,r.y + r.height/2 - centerSegY), Point(r.x + centerSegX,r.y + r.height/2 ), Point(r.x  + r.width- centerSegX,r.y + r.height/2) };
+
+        //8
+        Point SegDivided[14] = { 
+          //0
+          Point(r.x + centerSegX, r.y + centerSegY), 
+          Point(r.x + r.width - centerSegX, r.y + centerSegY) , 
+          //1
+          Point(r.x + r.width - centerSegX, r.y + centerSegY),
+          Point(r.x + r.width - centerSegX, r.y + r.height/2), 
+          //2
+          Point(r.x + r.width - centerSegX,r.y + r.height/2), 
+          Point(r.x + r.width - centerSegX,r.y + r.height - centerSegY ),
+          //3
+          Point(r.x + centerSegX, r.y + r.height - centerSegY), 
+          Point(r.x + r.width -  centerSegX, r.y + r.height - centerSegY), 
+          //4
+          Point(r.x + centerSegX,r.y + r.height/2), 
+          Point(r.x + centerSegX,r.y + r.height - centerSegY),
+          //5
+          Point(r.x + centerSegX,r.y + centerSegY), 
+          Point(r.x + centerSegX,r.y + r.height/2 ), 
+          //6
+          Point(r.x + centerSegX,r.y + r.height/2 ), 
+          Point(r.x  + r.width- centerSegX,r.y + r.height/2) 
+        };
         
+        centerSegY = r.height / 10;
+        centerSegX = r.width / 10;
+        //*
+        Point SegDividedOp[16] = { 
+          //0
+          Point(r.x + centerSegX, r.y + centerSegY), 
+          Point(r.x + r.width/2, r.y + r.height/2) , 
+          //1
+          Point(r.x + r.width/2, r.y + centerSegY),
+          Point(r.x + r.width/2, r.y + r.height/2), 
+          //2
+          Point(r.x + r.width - centerSegX, r.y + centerSegY), 
+          Point(r.x + r.width/2 ,r.y + r.height/2),
+          //3
+          Point(r.x + r.width/2, r.y + r.height/2), 
+          Point(r.x + r.width - centerSegX, r.y + r.height/2), 
+          //4
+          Point(r.x + r.width/2, r.y + r.height/2), 
+          Point(r.x + r.width - centerSegX,r.y + r.height - centerSegY),
+          //5
+          Point(r.x + r.width/2, r.y + r.height/2), 
+          Point(r.x + r.width/2, r.y + r.height - centerSegY ), 
+          //6
+          Point(r.x + centerSegX, r.y + r.height - centerSegY ), 
+          Point(r.x  + r.width/2, r.y + r.height/2),
+          //7
+          Point(r.x + centerSegX, r.y + r.height/2 ), 
+          Point(r.x + r.width/2, r.y + r.height/2)
+        };
+
         
         int count=0;
         Point tmp;
@@ -174,14 +226,16 @@ int main(){
           
         
           if ( count != 0 && count%2 !=0){
-            
+            line(drawing, tmp, p, Scalar(255,0,0), 4);
             if (tmp.x < p.x){
               
-              total = r.width - 2*centerSegX;
+              total = p.x - tmp.x;
               for (int i =tmp.x ;i< p.x;i++){
-                Segments.push_back((int)framet.at<uchar>(i, p.y));
+                //varies the columns and fixes the row
+                Segments.push_back((int)framet.at<uchar>(p.y, i));
 
               }
+
 
            
               value = (float)countNonZero(Segments) / (float)total;
@@ -196,12 +250,13 @@ int main(){
             }else{
              
               for (int i =tmp.y ;i< p.y ;i++){
-
-                Segments.push_back((int)framet.at<uchar>(p.x,i));
+                
+                //varies the row and fixes the column
+                Segments.push_back((int)framet.at<uchar>(i,p.x));
               }
 
 
-              total = (r.height / 2) - (2*centerSegY);
+              total = p.y -tmp.y;
               
               value = (float)countNonZero(Segments) / (float)total;
               cout << "value: " << value << endl;
@@ -218,7 +273,8 @@ int main(){
 
             }
 
-            Segments.release();
+
+            Segments = Mat();
 
           }else{
             tmp = p;
@@ -254,7 +310,7 @@ int main(){
         if(!isNumber){
           SegmentsNormalized.clear();
           count =0;
-          for(Point p : SegDivided){
+          for(Point p : SegDividedOp){
             
             int total;
             float value;
@@ -286,7 +342,7 @@ int main(){
                   }
                 }
 
-                total = r.width - 2*centerSegX;
+                total = (r.width/2) - (2*centerSegX);
                 
 
             
@@ -377,6 +433,9 @@ int main(){
 
     }
 
+    
+    imshow("bla", framet);
+    
     
 
     list<char>::iterator it;

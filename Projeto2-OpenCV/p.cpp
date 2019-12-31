@@ -13,17 +13,15 @@ using namespace cv;
  
 
 Mat morphologicalOpeningClosing(Mat imgThresholded){
-	//morphological opening
-	erode(imgThresholded, imgThresholded, getStructuringElement(MORPH_ELLIPSE, Size(5, 5))); //pequenos buracos e intrusões são preenchidas
-	dilate(imgThresholded, imgThresholded, getStructuringElement(MORPH_ELLIPSE, Size(5, 5))); //buracos são aumentados e extrusões são eliminadas
-	//como é usado um elemento estruturante eliptico os contornos do objeto sao suavizados e são eliminadas pequenas protuberâncias
-
 
 	//morphological closing 
-	dilate(imgThresholded, imgThresholded, getStructuringElement(MORPH_ELLIPSE, Size(5, 5))); 
-	erode(imgThresholded, imgThresholded, getStructuringElement(MORPH_ELLIPSE, Size(5, 5)));
+	dilate(imgThresholded, imgThresholded, getStructuringElement(MORPH_RECT, Size(5, 5))); 
+	erode(imgThresholded, imgThresholded, getStructuringElement(MORPH_RECT, Size(5, 5)));
 	
-	
+  //morphological opening
+	erode(imgThresholded, imgThresholded, getStructuringElement(MORPH_RECT, Size(5, 5))); 
+	dilate(imgThresholded, imgThresholded, getStructuringElement(MORPH_RECT, Size(5, 5))); 
+
 	return imgThresholded;
 }
 
@@ -49,10 +47,10 @@ int main(){
   keyValueNumbers.insert(make_pair<int,list<int> > (9,{1,1,1,1,0,1,1}) );
   
   map <char,list<int> > keyValueOperators;
-  keyValueOperators.insert(make_pair<char,list<int> > ('+',{1,0,1,0,1,0,1,0}) );
-  keyValueOperators.insert(make_pair<char,list<int> > ('-',{0,0,1,0,0,0,1,0}) );
+  keyValueOperators.insert(make_pair<char,list<int> > ('+',{0,1,0,1,0,1,0,1}) );
+  keyValueOperators.insert(make_pair<char,list<int> > ('-',{0,0,0,1,0,0,0,1}) );
   keyValueOperators.insert(make_pair<char,list<int> > ('*',{1,1,1,1,1,1,1,1}) );
-  keyValueOperators.insert(make_pair<char,list<int> > ('/',{0,1,0,0,0,1,0,0}) );
+  keyValueOperators.insert(make_pair<char,list<int> > ('/',{0,0,1,0,0,0,1,0}) );
   
   list<char> calculation;
   list<int> numb;
@@ -102,9 +100,10 @@ int main(){
     // Binary Threshold
     threshold(frame,framet, thresh, maxValue, THRESH_BINARY_INV);
 
+
+
     framet = morphologicalOpeningClosing(framet); //Operaçoes Morfologicas de opening e closing para eliminar gaps
 
-            
     
     Mat canny_output;
     vector<Vec4i> hierarchy;
@@ -114,10 +113,9 @@ int main(){
     Canny( framet, canny_output, thresh, thresh*2, 7 );
 
 
-
-
     /// Find contours
     findContours( canny_output, contours, hierarchy, RETR_TREE, CHAIN_APPROX_SIMPLE , Point(0, 0) );
+    
     
     Mat drawing = Mat::zeros( canny_output.size(), CV_8UC3 );
 
@@ -148,7 +146,7 @@ int main(){
     list<int> SegmentsNormalized;
     Mat Segments = Mat(); 
 
-
+    int count_Rect = 0;
     for( Rect r : boundRect)
     {   
       
@@ -192,9 +190,9 @@ int main(){
           //1
           Point(r.x + r.width/2, r.y + centerSegY),
           Point(r.x + r.width/2, r.y + r.height/2), 
-          //2
-          Point(r.x + r.width - centerSegX, r.y + centerSegY), 
+          //2 
           Point(r.x + r.width/2 ,r.y + r.height/2),
+          Point(r.x + r.width - centerSegX, r.y + centerSegY),
           //3
           Point(r.x + r.width/2, r.y + r.height/2), 
           Point(r.x + r.width - centerSegX, r.y + r.height/2), 
@@ -238,8 +236,7 @@ int main(){
 
            
               value = (float)countNonZero(Segments) / (float)total;
-              cout << "value: " << value << endl;
-              if (value > 0.70){
+              if (value > 0.8){
                 SegmentsNormalized.push_back(1);
               }else{
                 SegmentsNormalized.push_back(0);
@@ -258,11 +255,10 @@ int main(){
               total = p.y -tmp.y;
               
               value = (float)countNonZero(Segments) / (float)total;
-              cout << "value: " << value << endl;
               
 
 
-              if (value > 0.70){
+              if (value > 0.8){
                 SegmentsNormalized.push_back(1);
               }else{
                 SegmentsNormalized.push_back(0);
@@ -293,11 +289,13 @@ int main(){
         for( int key : numb){
           if(keyValueNumbers[key] == SegmentsNormalized){
             isNumber = true;
-            calculation.push_back((char)key);
-            cout << "\nEqual"<< endl;
-            cout << "\nNumber: " << key << endl;
-            break;
-            
+            if(count_Rect != 0 && count_Rect %2 != 0)
+            {
+              calculation.push_back((char)key);
+              cout << "\nEqual"<< endl;
+              cout << "\nNumber: " << key << endl;
+              break;
+            }
             
           } 
             
@@ -319,7 +317,7 @@ int main(){
 
           
             if ( count!=0 && count%2 !=0){
-            
+              line(drawing, tmp,p,Scalar(255,0,0), 4);
               if (tmp.x < p.x){
                 if(tmp.y < p.y){
                   int count_y = tmp.y;
@@ -403,10 +401,12 @@ int main(){
         for( int key : op){
           if(keyValueOperators[key] == SegmentsNormalized){
             isOp = true;
-            calculation.push_back((char)key);
-            cout << "\nEqual"<< endl;
-            cout << "\nOperator: " << key << endl;
-            break;
+            if( count_Rect % 2 != 0 && count_Rect != 0){
+              calculation.push_back((char)key);
+              cout << "\nEqual"<< endl;
+              cout << "\nOperator: " << key << endl;
+              break;
+            }
             
           } 
             
@@ -427,9 +427,90 @@ int main(){
         }
 
         
+      }else if (r.height > framet.rows * 0.2 ){
+        centerSegY = r.height / 2;
+        centerSegX = r.width / 2;
+
+        
+        Point SegDivided[2] = { 
+          //0
+          Point(r.x + centerSegX, r.y), 
+          Point(r.x + centerSegX, r.y + 2*centerSegY) , 
+        };
+
+        int total;
+        float value;
+        int count=0;
+        Point tmp;
+          
+        for (Point p : SegDivided){
+          if ( count != 0 && count%2 !=0){
+            line(drawing, tmp, p, Scalar(255,0,0), 4);
+            
+            for (int i =tmp.y ;i< p.y ;i++){
+              
+              //varies the row and fixes the column
+              Segments.push_back((int)framet.at<uchar>(i,p.x));
+            }
+
+
+            total = p.y -tmp.y;
+            
+            value = (float)countNonZero(Segments) / (float)total;
+
+
+
+            if (value > 0.70){
+
+              SegmentsNormalized.push_back(0);
+              SegmentsNormalized.push_back(1);
+              SegmentsNormalized.push_back(1);
+              SegmentsNormalized.push_back(0);
+              SegmentsNormalized.push_back(0);
+              SegmentsNormalized.push_back(0);
+              SegmentsNormalized.push_back(0);
+            }else{
+              SegmentsNormalized.push_back(0);
+              
+            }
+
+
+
+            Segments = Mat();
+
+          }else{
+            tmp = p;
+            
+          }
+          
+          count++;
+          
+         
+          
+        }
+
+
+        
+    
+        bool isNumber = false;
+        if(keyValueNumbers[1] == SegmentsNormalized){
+          isNumber = true;
+          if(count_Rect != 0 && count_Rect %2 != 0)
+          {
+            calculation.push_back((char)1);
+            cout << "\nEqual"<< endl;
+            cout << "\nNumber: " << 1 << endl;
+            break;
+          }  
+          
+        } 
+            
+          
+      }else{
+
       }
       
-
+      count_Rect++;
     }
 
     
@@ -462,6 +543,11 @@ int main(){
         if( it != op.end()){
           calculation.push_front('e');
         }
+        it2 = find(numb.begin(), numb.end(), tmp - 48);
+        //Check for operator
+        if( it2 == numb.end()){
+          error = true;
+        }
       }else{
         error = true;
       }
@@ -471,51 +557,53 @@ int main(){
       
 
 
-
-    if(calculation.size() > 0){
-      for(char n : calculation){
-        // Fetch the iterator of element with value 'the'
-        if(n == 'e'){
-          error = true;
-          break;
-        }
-
-        it = find(op.begin(), op.end(), n);
-        //Check for operator
-        if( it != op.end()){
-          O = true;
-          if (calc != -1){
-            if(Lop == '/'){
-              calc = calc / stoi(sum_tmp);
-            }else if(Lop == '*'){
-              calc = calc * stoi(sum_tmp);
-            }else if(Lop == '+'){
-              calc = calc + stoi(sum_tmp);
-            }else{
-              calc = calc - stoi(sum_tmp);
-            }
-          }else{
-            calc = stoi(sum_tmp);
+    if (!error){
+      if(calculation.size() > 0){
+        for(char n : calculation){
+          // Fetch the iterator of element with value 'the'
+          if(n == 'e'){
+            error = true;
+            break;
           }
 
-          Lop = n;
-          sum_tmp = "";
+          it = find(op.begin(), op.end(), n);
+          //Check for operator
+          if( it != op.end()){
+            O = true;
+            if (calc != -1){
+              if(Lop == '/'){
+                calc = calc / stoi(sum_tmp);
+              }else if(Lop == '*'){
+                calc = calc * stoi(sum_tmp);
+              }else if(Lop == '+'){
+                calc = calc + stoi(sum_tmp);
+              }else{
+                calc = calc - stoi(sum_tmp);
+              }
+            }else{
+                calc = stoi(sum_tmp);
+              
+            }
 
-        } 
+            Lop = n;
+            sum_tmp = "";
 
-        it2 = find(numb.begin(), numb.end(), n);
-        //Check for operator
-        if( it2 != numb.end()){
-          N = true;
-          sum_tmp += n;
+          } 
+
+          it2 = find(numb.begin(), numb.end(), n);
+          //Check for operator
+          if( it2 != numb.end()){
+            N = true;
+            sum_tmp += n;
+          }
+
+          if(!N && !O){
+            error = true;
+            break;
+          }
+
+
         }
-
-        if(!N && !O){
-          error = true;
-          break;
-        }
-
-
       }
     }
     

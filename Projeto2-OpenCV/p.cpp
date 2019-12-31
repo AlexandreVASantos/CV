@@ -27,10 +27,9 @@ Mat morphologicalOpeningClosing(Mat imgThresholded){
 
 
 int main(){
-  
-  // char a = '23', b = '3';
-  // cout << a - 48 + b-48 << endl;
-  
+ 
+
+
   // Create a VideoCapture object, 0 for the webCam
 
   VideoCapture cap(0); 
@@ -52,7 +51,6 @@ int main(){
   keyValueOperators.insert(make_pair<char,list<int> > ('*',{1,1,1,1,1,1,1,1}) );
   keyValueOperators.insert(make_pair<char,list<int> > ('/',{0,0,1,0,0,0,1,0}) );
   
-  list<char> calculation;
   list<int> numb;
   list<char> op;
   
@@ -72,7 +70,8 @@ int main(){
   }
      
   while(1){
- 
+    list<char> calculation;
+  
     Mat frame;
     Mat framet;
 
@@ -514,8 +513,14 @@ int main(){
     }
 
     
-    imshow("bla", framet);
-    
+    imshow("black and white", framet);
+    for(char c : calculation){
+      try{
+        cout << " num" << (int)c << endl;
+      }catch(int e){
+        cout << "op" << c << endl;
+      }
+    }
     
 
     list<char>::iterator it;
@@ -526,45 +531,61 @@ int main(){
     bool O = false;
     bool N = false;
     char Lop = '0';
-    string sum_tmp="";
+    string sum_tmp;
     int calc = -1;
     char tmp;
     if(calculation.size() > 0){
-      sum_tmp += calculation.front();
-      calculation.pop_front();
+      
         
-      if(sum_tmp != "e"){
+      if(calculation.front() != 'e'){
 
-        tmp = sum_tmp[0];
+        tmp = calculation.front();
         
 
-        it = find(op.begin(), op.end(), tmp);
+        it = find(op.begin(), op.end(), (char)tmp);
         //Check for operator
         if( it != op.end()){
-          calculation.push_front('e');
-        }
-        it2 = find(numb.begin(), numb.end(), tmp - 48);
-        //Check for operator
-        if( it2 == numb.end()){
+
+          cout << "ERROR1" << endl;
+      
           error = true;
+        }
+
+        if(!error){
+          it2 = find(numb.begin(), numb.end(), (int)tmp);
+          //Check for number
+          if( it2 == numb.end()){
+            error = true;
+            cout << "ERROR4" << endl;
+        
+          }else{
+
+            sum_tmp = to_string((int)calculation.front());
+
+            cout << "sum" << sum_tmp << endl;
+
+            calculation.pop_front();
+          }
         }
       }else{
         error = true;
+        cout << "ERROR2" << endl;
+      
       }
     }else{
       error = true;
+
+      cout << "ERROR3" << endl;
+      
     }
       
 
 
     if (!error){
+      cout << "NO ERROR" << endl;
       if(calculation.size() > 0){
         for(char n : calculation){
-          // Fetch the iterator of element with value 'the'
-          if(n == 'e'){
-            error = true;
-            break;
-          }
+
 
           it = find(op.begin(), op.end(), n);
           //Check for operator
@@ -581,20 +602,30 @@ int main(){
                 calc = calc - stoi(sum_tmp);
               }
             }else{
-                calc = stoi(sum_tmp);
-              
+
+              try{
+                if (sum_tmp.length() != 0){
+                  calc = stoi(sum_tmp);
+                }
+              }catch(int e){
+                error = true;
+                break;
+              }
+
+
             }
 
             Lop = n;
-            sum_tmp = "";
+            sum_tmp.clear();
 
           } 
 
-          it2 = find(numb.begin(), numb.end(), n);
-          //Check for operator
+          it2 = find(numb.begin(), numb.end(), (int)n);
+
+           //Check for number
           if( it2 != numb.end()){
             N = true;
-            sum_tmp += n;
+            sum_tmp += to_string((int)n) ;
           }
 
           if(!N && !O){
@@ -602,6 +633,8 @@ int main(){
             break;
           }
 
+        N= false;
+        O=false;
 
         }
       }
@@ -612,7 +645,13 @@ int main(){
     }else{
       if(calculation.size() > 0){  
         for(char n : calculation){
-          cout << n << calc << endl;
+          if( (int)n >= 0 && (int)n <=9){
+            cout << (int)n << endl;
+     
+          }else{
+            cout << n << endl;
+         
+          }
         }
       }else{
         

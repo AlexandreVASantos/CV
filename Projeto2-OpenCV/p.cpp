@@ -144,12 +144,18 @@ int main(){
     
     list<int> SegmentsNormalized;
     Mat Segments = Mat(); 
-
+    bool error = false;
+    bool isNumber;
+    bool isOp;
     int count_Rect = 0;
+    bool later = false;
     for( Rect r : boundRect)
     {   
+
+      isOp = false;
+      isNumber=false;
       
-      if (r.area() > framet.cols * framet.rows * 0.05){
+      if (r.height > framet.rows * 0.1 && r.width > framet.cols * 0.1){
       
         centerSegY = r.height / 14;
         centerSegX = r.width / 8;
@@ -212,7 +218,7 @@ int main(){
         
         int count=0;
         Point tmp;
-        
+        SegmentsNormalized.clear();
         for(Point p : SegDivided){
 
 
@@ -284,15 +290,19 @@ int main(){
 
         
     
-        bool isNumber = false;
+       
         for( int key : numb){
           if(keyValueNumbers[key] == SegmentsNormalized){
             isNumber = true;
             if(count_Rect != 0 && count_Rect %2 != 0)
             {
               calculation.push_back((char)key);
-              cout << "\nEqual"<< endl;
-              cout << "\nNumber: " << key << endl;
+              if(later){
+                calculation.push_back('-');
+                later = false;
+              }
+              
+              
               break;
             }
             
@@ -396,14 +406,12 @@ int main(){
 
         }
 
-        bool isOp = false;
+       
         for( int key : op){
           if(keyValueOperators[key] == SegmentsNormalized){
             isOp = true;
             if( count_Rect % 2 != 0 && count_Rect != 0){
               calculation.push_back((char)key);
-              cout << "\nEqual"<< endl;
-              cout << "\nOperator: " << key << endl;
               break;
             }
             
@@ -420,13 +428,12 @@ int main(){
 
         SegmentsNormalized.clear();
 
-        if(!isOp && !isNumber){
-          calculation.push_back('e');
-          break;
-        }
+        
 
         
-      }else if (r.height > framet.rows * 0.2 ){
+      }
+      
+      if (r.height > framet.rows * 0.1 && r.height > r.width && !isNumber && !isOp){
         centerSegY = r.height / 2;
         centerSegX = r.width / 2;
 
@@ -459,6 +466,7 @@ int main(){
 
 
 
+            SegmentsNormalized.clear();
             if (value > 0.70){
 
               SegmentsNormalized.push_back(0);
@@ -491,34 +499,125 @@ int main(){
 
         
     
-        bool isNumber = false;
+        
         if(keyValueNumbers[1] == SegmentsNormalized){
           isNumber = true;
           if(count_Rect != 0 && count_Rect %2 != 0)
           {
             calculation.push_back((char)1);
-            cout << "\nEqual"<< endl;
-            cout << "\nNumber: " << 1 << endl;
-            break;
+            if(later){
+              calculation.push_back('-');
+              later = false;
+            }
           }  
           
         } 
             
           
-      }else{
+      }
+      
+      if (r.width > framet.cols * 0.1 && r.width> r.height && !isNumber && !isOp){
+
+        centerSegY = r.height / 2;
+        centerSegX = r.width / 10;
+
+        
+        Point SegDivided[2] = { 
+          //0
+          Point(r.x + centerSegX, r.y + centerSegY), 
+          Point(r.x + r.width - centerSegX, r.y + centerSegY) , 
+        };
+
+        int total;
+        float value;
+        int count=0;
+        Point tmp;
+          
+        for (Point p : SegDivided){
+          if ( count != 0 && count%2 !=0){
+            line(drawing, tmp, p, Scalar(255,0,0), 4);
+            
+            for (int i =tmp.x ;i< p.x ;i++){
+              
+              //varies the row and fixes the column
+              Segments.push_back((int)framet.at<uchar>(p.y,i));
+            }
+
+
+            total = p.x -tmp.x;
+            
+            value = (float)countNonZero(Segments) / (float)total;
+
+
+
+            SegmentsNormalized.clear();
+            if (value > 0.70){
+
+              SegmentsNormalized.push_back(0);
+              SegmentsNormalized.push_back(0);
+              SegmentsNormalized.push_back(0);
+              SegmentsNormalized.push_back(1);
+              SegmentsNormalized.push_back(0);
+              SegmentsNormalized.push_back(0);
+              SegmentsNormalized.push_back(0);
+              SegmentsNormalized.push_back(1);
+              
+            }else{
+              SegmentsNormalized.push_back(0);
+              error = true;
+              break;
+              
+            }
+
+
+
+            Segments = Mat();
+
+          }else{
+            tmp = p;
+            
+          }
+          
+          count++;
+          
+         
+          
+        }
+        
+        if(keyValueOperators['-'] == SegmentsNormalized){
+          isOp = true;
+          if(count_Rect != 0 && count_Rect %2 != 0)
+          {
+            if(calculation.size() != 0){
+              calculation.push_back('-');
+            }else{
+              later = true;
+            }
+          }  
+          
+        } 
+
+
+
 
       }
       
       count_Rect++;
+      
+
+     
+
     }
 
     
     imshow("black and white", framet);
     for(char c : calculation){
-      try{
-        cout << " num" << (int)c << endl;
-      }catch(int e){
-        cout << "op" << c << endl;
+      if( (int)c >= 0 && (int)c <=9){
+        cout << "num " << (int)c << endl;
+     
+      }else{
+        cout << "op "<< c << endl;
+      
       }
     }
     
@@ -527,58 +626,65 @@ int main(){
 
     list<int>::iterator it2;
 
-    bool error = false;
+    
     bool O = false;
     bool N = false;
     char Lop = '0';
     string sum_tmp;
     int calc = -1;
     char tmp;
-    if(calculation.size() > 0){
-      
+
+    list<char> calculation_final;
+    list<char> calculation_tmp;
+
+    for(char c : calculation){
+      calculation_tmp.push_front(c);
+    }
+
+    calculation = calculation_tmp;
+    
+
+
+    if(!error){  
+      if(calculation.size() > 0){
+
+          tmp = calculation.front();
+          
+
+          it = find(op.begin(), op.end(), (char)tmp);
+          //Check for operator
+          if( it != op.end()){
+
+            cout << "ERROR1" << endl;
         
-      if(calculation.front() != 'e'){
-
-        tmp = calculation.front();
-        
-
-        it = find(op.begin(), op.end(), (char)tmp);
-        //Check for operator
-        if( it != op.end()){
-
-          cout << "ERROR1" << endl;
-      
-          error = true;
-        }
-
-        if(!error){
-          it2 = find(numb.begin(), numb.end(), (int)tmp);
-          //Check for number
-          if( it2 == numb.end()){
             error = true;
-            cout << "ERROR4" << endl;
-        
-          }else{
-
-            sum_tmp = to_string((int)calculation.front());
-
-            cout << "sum" << sum_tmp << endl;
-
-            calculation.pop_front();
           }
-        }
+
+          if(!error){
+            it2 = find(numb.begin(), numb.end(), (int)tmp);
+            //Check for number
+            if( it2 == numb.end()){
+              error = true;
+              cout << "ERROR4" << endl;
+          
+            }else{
+
+              sum_tmp = to_string((int)calculation.front());
+
+              cout << "sum" << sum_tmp << endl;
+              calculation_final = calculation;
+              calculation.pop_front();
+            }
+          }
+        
       }else{
         error = true;
-        cout << "ERROR2" << endl;
-      
-      }
-    }else{
-      error = true;
 
-      cout << "ERROR3" << endl;
-      
+        cout << "ERROR3" << endl;
+        
+      }
     }
-      
+    
 
 
     if (!error){
@@ -618,14 +724,16 @@ int main(){
             Lop = n;
             sum_tmp.clear();
 
-          } 
+          }else{ 
 
-          it2 = find(numb.begin(), numb.end(), (int)n);
+            it2 = find(numb.begin(), numb.end(), (int)n);
 
-           //Check for number
-          if( it2 != numb.end()){
-            N = true;
-            sum_tmp += to_string((int)n) ;
+            //Check for number
+            if( it2 != numb.end()){
+              N = true;
+              sum_tmp += to_string((int)n) ;
+            }
+
           }
 
           if(!N && !O){
@@ -637,6 +745,17 @@ int main(){
         O=false;
 
         }
+        if( sum_tmp.length() > 0){
+          if(Lop == '/'){
+            calc = calc / stoi(sum_tmp);
+          }else if(Lop == '*'){
+            calc = calc * stoi(sum_tmp);
+          }else if(Lop == '+'){
+            calc = calc + stoi(sum_tmp);
+          }else{
+            calc = calc - stoi(sum_tmp);
+          }
+          }
       }
     }
     
@@ -644,7 +763,7 @@ int main(){
       cout << "Não foi possível descodificar a sua conta" << endl;
     }else{
       if(calculation.size() > 0){  
-        for(char n : calculation){
+        for(char n : calculation_final){
           if( (int)n >= 0 && (int)n <=9){
             cout << (int)n << endl;
      

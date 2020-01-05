@@ -7,6 +7,8 @@
 #include <map>
 #include <string>
 #include <list>
+#include <algorithm> 
+#include <vector>
  
 using namespace std;
 using namespace cv;
@@ -23,6 +25,11 @@ Mat morphologicalOpeningClosing(Mat imgThresholded){
 	dilate(imgThresholded, imgThresholded, getStructuringElement(MORPH_RECT, Size(5, 5))); 
 
 	return imgThresholded;
+}
+
+// funtion to use on sort, left most rectangles are iterated first
+bool leftOrRight(Rect r1, Rect r2){
+  return((r1.tl().x) < (r2.tl().x));
 }
 
 
@@ -148,7 +155,11 @@ int main(){
     bool isNumber;
     bool isOp;
     int count_Rect = 0;
-    bool later = false;
+    
+
+    sort(boundRect.begin(),boundRect.end(),leftOrRight);
+
+
     for( Rect r : boundRect)
     {   
 
@@ -283,26 +294,14 @@ int main(){
           
           count++;
           
-         
-          
         }
-
-
-        
-    
-       
+  
         for( int key : numb){
           if(keyValueNumbers[key] == SegmentsNormalized){
             isNumber = true;
             if(count_Rect != 0 && count_Rect %2 != 0)
             {
               calculation.push_back((char)key);
-              if(later){
-                calculation.push_back('-');
-                later = false;
-              }
-              
-              
               break;
             }
             
@@ -310,7 +309,6 @@ int main(){
             
           
         }
-        
 
         //Check for Operators
         if(!isNumber){
@@ -384,14 +382,8 @@ int main(){
 
               }
 
-              
-              
               Segments.release();
-
-
-            
-
-              
+  
               
             }else{
               tmp = p;
@@ -399,14 +391,11 @@ int main(){
             }
             
             count++;
-            
-          
-            
+                    
           }
 
         }
 
-       
         for( int key : op){
           if(keyValueOperators[key] == SegmentsNormalized){
             isOp = true;
@@ -415,21 +404,11 @@ int main(){
               break;
             }
             
-          } 
-            
+          }            
           
         }
 
-        
-
-
-
-
-
         SegmentsNormalized.clear();
-
-        
-
         
       }
       
@@ -481,8 +460,6 @@ int main(){
               
             }
 
-
-
             Segments = Mat();
 
           }else{
@@ -491,24 +468,16 @@ int main(){
           }
           
           count++;
-          
          
           
         }
 
-
-        
-    
         
         if(keyValueNumbers[1] == SegmentsNormalized){
           isNumber = true;
           if(count_Rect != 0 && count_Rect %2 != 0)
           {
             calculation.push_back((char)1);
-            if(later){
-              calculation.push_back('-');
-              later = false;
-            }
           }  
           
         } 
@@ -588,38 +557,20 @@ int main(){
           isOp = true;
           if(count_Rect != 0 && count_Rect %2 != 0)
           {
-            if(calculation.size() != 0){
-              calculation.push_back('-');
-            }else{
-              later = true;
-            }
+            calculation.push_back('-');
           }  
           
         } 
 
-
-
-
       }
       
       count_Rect++;
-      
-
-     
 
     }
 
     
     imshow("black and white", framet);
-    for(char c : calculation){
-      if( (int)c >= 0 && (int)c <=9){
-        cout << "num " << (int)c << endl;
-     
-      }else{
-        cout << "op "<< c << endl;
-      
-      }
-    }
+    
     
 
     list<char>::iterator it;
@@ -635,15 +586,6 @@ int main(){
     char tmp;
 
     list<char> calculation_final;
-    list<char> calculation_tmp;
-
-    for(char c : calculation){
-      calculation_tmp.push_front(c);
-    }
-
-    calculation = calculation_tmp;
-    
-
 
     if(!error){  
       if(calculation.size() > 0){
@@ -655,7 +597,7 @@ int main(){
           //Check for operator
           if( it != op.end()){
 
-            cout << "ERROR1" << endl;
+            cout << "Operator as first argument" << endl;
         
             error = true;
           }
@@ -665,13 +607,12 @@ int main(){
             //Check for number
             if( it2 == numb.end()){
               error = true;
-              cout << "ERROR4" << endl;
+              cout << "No number detected" << endl;
           
             }else{
 
               sum_tmp = to_string((int)calculation.front());
 
-              cout << "sum" << sum_tmp << endl;
               calculation_final = calculation;
               calculation.pop_front();
             }
@@ -680,15 +621,13 @@ int main(){
       }else{
         error = true;
 
-        cout << "ERROR3" << endl;
+        cout << "Nothing Detected" << endl;
         
       }
     }
     
-
-
     if (!error){
-      cout << "NO ERROR" << endl;
+      
       if(calculation.size() > 0){
         for(char n : calculation){
 
@@ -698,14 +637,19 @@ int main(){
           if( it != op.end()){
             O = true;
             if (calc != -1){
-              if(Lop == '/'){
-                calc = calc / stoi(sum_tmp);
-              }else if(Lop == '*'){
-                calc = calc * stoi(sum_tmp);
-              }else if(Lop == '+'){
-                calc = calc + stoi(sum_tmp);
+              if(sum_tmp.length() != 0){
+                if(Lop == '/'){
+                  calc = calc / stoi(sum_tmp);
+                }else if(Lop == '*'){
+                  calc = calc * stoi(sum_tmp);
+                }else if(Lop == '+'){
+                  calc = calc + stoi(sum_tmp);
+                }else{
+                  calc = calc - stoi(sum_tmp);
+                }
               }else{
-                calc = calc - stoi(sum_tmp);
+                error = true;
+                break;
               }
             }else{
 
@@ -760,7 +704,7 @@ int main(){
     }
     
     if(error){
-      cout << "Não foi possível descodificar a sua conta" << endl;
+      cout << "Resultado: Não foi possível descodificar a sua conta!" << endl;
     }else{
       if(calculation.size() > 0){  
         for(char n : calculation_final){
@@ -773,13 +717,21 @@ int main(){
           }
         }
       }else{
-        
-        calc = stoi(sum_tmp);
+        it2 = find(numb.begin(), numb.end(), (int)sum_tmp[0]);
+
+        //Check for number
+        if( it2 != numb.end()){
+          calc = stoi(sum_tmp);
+        }else{
+          error = true;
+        }
+
+
 
       }
-
-      cout << "Resultado: " << calc << endl;
-      
+      if(!error){
+        cout << "Resultado: " << calc << endl;
+      }
     }
     
     imshow( "Contours", drawing );
